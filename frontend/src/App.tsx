@@ -1,0 +1,272 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './components/Login';
+import Layout from './components/Layout';
+import AdminDashboard from './dashboards/AdminDashboard';
+import ReceptionistDashboard from './dashboards/ReceptionistDashboard';
+import DoctorDashboard from './dashboards/DoctorDashboard';
+import PatientDashboard from './dashboards/PatientDashboard';
+import UserManagement from './components/users/UserManagement';
+import PatientManagement from './components/patients/PatientManagement';
+
+// Composants placeholder pour les routes non implémentées
+const ClinicsManagement: React.FC = () => (
+  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="px-4 py-6 sm:px-0">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Cliniques</h1>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const BillingManagement: React.FC = () => (
+  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="px-4 py-6 sm:px-0">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Facturation</h1>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const SettingsManagement: React.FC = () => (
+  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="px-4 py-6 sm:px-0">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Paramètres</h1>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const AppointmentsManagement: React.FC = () => (
+  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="px-4 py-6 sm:px-0">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Prise de Rendez-vous</h1>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const ConsultationsManagement: React.FC = () => (
+  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="px-4 py-6 sm:px-0">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Consultations</h1>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const PrescriptionsManagement: React.FC = () => (
+  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="px-4 py-6 sm:px-0">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Ordonnances</h1>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ 
+  children, 
+  allowedRoles = [] 
+}) => {
+  const { user, isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <Layout>{children}</Layout>;
+};
+
+const AppRoutes: React.FC = () => {
+  const { user, isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getDashboard = () => {
+    if (!user) return <Navigate to="/login" replace />;
+    
+    switch (user.role) {
+      case 'admin':
+        return <AdminDashboard />;
+      case 'receptionist':
+        return <ReceptionistDashboard />;
+      case 'doctor':
+        return <DoctorDashboard />;
+      case 'patient':
+        return <PatientDashboard />;
+      default:
+        return <AdminDashboard />;
+    }
+  };
+
+  return (
+    <Routes>
+      <Route 
+        path="/login" 
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+        } 
+      />
+      
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            {getDashboard()}
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Routes Admin */}
+      <Route 
+        path="/users" 
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <UserManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/clinics" 
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <ClinicsManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/settings" 
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <SettingsManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Routes Réceptionniste */}
+      <Route 
+        path="/patients" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
+            <PatientManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/appointments" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor']}>
+            <AppointmentsManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Routes Médecin */}
+      <Route 
+        path="/consultations" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'doctor']}>
+            <ConsultationsManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/prescriptions" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'doctor']}>
+            <PrescriptionsManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Routes communes */}
+      <Route 
+        path="/billing" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'patient']}>
+            <BillingManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/" 
+        element={
+          isAuthenticated ? 
+            <Navigate to="/dashboard" replace /> : 
+            <Navigate to="/login" replace />
+        } 
+      />
+      
+      {/* Route fallback pour les URLs inconnues */}
+      <Route 
+        path="*" 
+        element={
+          <ProtectedRoute>
+            <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+              <div className="px-4 py-6 sm:px-0">
+                <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">Page non trouvée</h1>
+                  <p className="text-red-700">La page que vous recherchez n'existe pas.</p>
+                </div>
+              </div>
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+    </Routes>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
+  );
+};
+
+export default App;

@@ -1,0 +1,18 @@
+{
+  "name": "medflow",
+  "version": "1.0.0",
+  "description": "\"# Projet MedFlow\"",
+  "main": "index.js",
+ "scripts": {
+    "dev": "concurrently -k \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm install && npm run dev",
+    "dev:backend": "cd backend && npm start",
+    "start": "npm run dev:backend",
+    "build": "cd frontend && npm run build"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
