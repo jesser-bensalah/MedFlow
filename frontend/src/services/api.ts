@@ -1,4 +1,4 @@
-// frontend/src/services/api.ts
+
 import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 
 const API_URL = 'http://localhost:3001';
@@ -12,10 +12,9 @@ const api = axios.create({
   timeout: 10000, // 10 seconds
 });
 
-// Request interceptor for API calls
+
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Check all possible token storage locations
     const token = localStorage.getItem('access_token') || 
                  localStorage.getItem('token') ||
                  sessionStorage.getItem('access_token') ||
@@ -26,7 +25,6 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Log the request for debugging
     console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
       params: config.params,
       data: config.data,
@@ -41,17 +39,14 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for API calls
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Log the response for debugging
     console.log(`[API] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
       data: response.data
     });
     return response;
   },
   (error: AxiosError) => {
-    // Handle network errors
     if (!error.response) {
       console.error('Network Error:', error.message);
       return Promise.reject({
@@ -60,7 +55,6 @@ api.interceptors.response.use(
       });
     }
     
-    // Log the error response for debugging
     const { status, data } = error.response;
     console.error(`[API Error] ${status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
       status,
@@ -68,15 +62,12 @@ api.interceptors.response.use(
       headers: error.response.headers
     });
     
-    // Handle specific status codes
     if (status === 401) {
-      // Auto logout if 401 response returned from API
       localStorage.removeItem('access_token');
       localStorage.removeItem('token');
       sessionStorage.removeItem('access_token');
       sessionStorage.removeItem('token');
       
-      // Redirect to login page if not already there
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
@@ -187,7 +178,7 @@ export const userService = {
     }
   },
 
-  // Get all doctors (public endpoint, no auth required)
+  // Get all doctors
   getDoctors: async (): Promise<any[]> => {
     try {
       console.log('[API] Fetching doctors from public endpoint...');
