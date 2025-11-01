@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Patch, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, InternalServerErrorException, UnauthorizedException, Put, BadRequestException } from '@nestjs/common';
+import type { Request } from 'express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -6,7 +7,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../enums/user-role.enum';
-import { Request } from 'express';
 
 interface AuthenticatedRequest extends Request {
   user: any;
@@ -24,9 +24,23 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Get('role/:role')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
+  async findByRole(@Param('role') role: string) {
+    // Convert role to lowercase to match enum values
+    const normalizedRole = role.toLowerCase();
+    
+    // Validate if the role exists in the UserRole enum
+    if (!Object.values(UserRole).includes(normalizedRole as UserRole)) {
+      throw new BadRequestException(`Invalid role: ${role}`);
+    }
+    
+    return this.usersService.findByRole(normalizedRole);
   }
 
   @Get(':id')
@@ -51,5 +65,59 @@ export class UsersController {
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   toggleUserStatus(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     return this.usersService.toggleUserStatus(+id, req.user);
+  }
+
+  // Public endpoint to get doctors (no authentication required)
+  @Get('public/doctors')
+  async getPublicDoctors() {
+    const requestId = Math.random().toString(36).substr(2, 9);
+    
+    try {
+      console.log(`[${requestId}] [PUBLIC] Fetching doctors list...`);
+      
+      // Get active doctors only
+      const doctors = await this.usersService.findByRole('doctor', true);
+      
+      if (!Array.isArray(doctors)) {
+        console.error(`[${requestId}] [PUBLIC] Expected array but got:`, typeof doctors);
+        return {
+          success: true,
+          data: []
+        };
+      }
+      
+      console.log(`[${requestId}] [PUBLIC] Successfully fetched ${doctors.length} doctors`);
+      
+      // Return only the necessary doctor information
+      return {
+        success: true,
+        data: doctors.map(doctor => ({
+          id: doctor.id,
+          email: doctor.email,
+          firstName: doctor.firstName,
+          lastName: doctor.lastName,
+          specialite: doctor.specialite,
+          phone: doctor.phone,
+          isActive: doctor.isActive,
+          role: doctor.role
+        }))
+      };
+    } catch (error) {
+      console.error(`[${requestId}] [PUBLIC] Error in getPublicDoctors:`, error);
+      return {
+        success: false,
+        message: 'Failed to fetch doctors',
+        error: error.message,
+        requestId
+      };
+    }
+  }
+  
+  @Get('doctors')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
+  async getDoctors() {
+    // Just call the public endpoint internally
+    return this.getPublicDoctors();
   }
 }

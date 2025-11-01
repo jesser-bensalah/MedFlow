@@ -18,7 +18,7 @@ const SideNav: React.FC = () => {
   const receptionistLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Gestion des Patients', path: '/patients', icon: '👤' },
-    { name: 'Prise de Rendez-vous', path: '/appointments', icon: '📅' },
+    { name: 'Prise de Rendez-vous', path: '/specialities', icon: '📅' },
     { name: 'Facturation', path: '/billing', icon: '💰' },
   ];
 

@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsEnum, IsOptional, ValidateIf, IsNotEmpty } from 'class-validator';
 import { UserRole } from '../../enums/user-role.enum';
 
 export class CreateUserDto {
@@ -20,4 +20,9 @@ export class CreateUserDto {
 
   @IsOptional()
   clinicId?: number;
-}
+
+  @ValidateIf(o => o.role === 'doctor')
+  @IsString()
+  @IsNotEmpty({ message: 'La spécialité est requise pour un médecin' })
+  specialite?: string;
+} 

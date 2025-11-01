@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const DoctorDashboard: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
@@ -10,7 +12,7 @@ const DoctorDashboard: React.FC = () => {
           {/* Rendez-vous du jour */}
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium text-gray-900">Rendez-vous du jour</h3>
+              <h3 className="text-lg font-medium text-gray-900 cursor-pointer hover:text-blue-600">Rendez-vous du jour</h3>
               <div className="mt-2 text-3xl font-bold text-gray-900">12</div>
             </div>
           </div>

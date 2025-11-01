@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Appointment } from './appointment.entity';
 import { UserRole } from '../enums/user-role.enum';
 
 @Entity('users')
@@ -18,6 +19,18 @@ export class User {
   @Column()
   lastName: string;
 
+  @Column({ nullable: true })
+  phone: string;
+
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true, name: 'emergency_contact' })
+  emergencyContact: string;
+
+  @OneToMany(() => Appointment, appointment => appointment.patient)
+  appointments: Appointment[];
+
   @Column({ type: 'enum', enum: UserRole, default: UserRole.PATIENT })
   role: UserRole;
 
@@ -32,4 +45,7 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ nullable: true })
+  specialite : string;
 }

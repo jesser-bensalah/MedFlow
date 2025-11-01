@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsOptional, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsOptional, MinLength, IsDateString } from 'class-validator';
 
 export class CreatePatientDto {
   @IsEmail()
@@ -25,4 +25,12 @@ export class CreatePatientDto {
   @IsOptional()
   @IsString()
   emergencyContact?: string;
+
+  @IsOptional()
+  @IsString()
+  role?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string; // Changed to string and made optional to match frontend format
 }

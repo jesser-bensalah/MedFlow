@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface Patient {
+  emergencyContact: string | undefined;
+  address: string | undefined;
+  dateOfBirth: string | undefined;
   id: number;
   email: string;
   firstName: string;
   lastName: string;
+  phone: string;
   role: string;
   isActive: boolean;
   createdAt: string;
@@ -16,7 +20,11 @@ interface CreatePatientData {
   password: string;
   firstName: string;
   lastName: string;
+  phone: string;
   role: string;
+  dateOfBirth: string;
+  address: string;
+  emergencyContact: string;
 }
 
 interface UpdatePatientData {
@@ -24,6 +32,10 @@ interface UpdatePatientData {
   password?: string;
   firstName?: string;
   lastName?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  address?: string;
+  emergencyContact?: string;
   isActive?: boolean;
 }
 
@@ -33,19 +45,21 @@ const PatientManagement: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   
- 
   const [formData, setFormData] = useState<CreatePatientData>({
     email: '',
     password: '',
     firstName: '',
     lastName: '',
-    role: 'patient'
+    phone: '',
+    role: 'patient',
+    dateOfBirth: '',
+    address: '',
+    emergencyContact: ''
   });
   
   const [editFormData, setEditFormData] = useState<UpdatePatientData>({});
@@ -80,24 +94,81 @@ const PatientManagement: React.FC = () => {
   const handleAddPatient = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormLoading(true);
+    setError('');
     
     try {
       const token = localStorage.getItem('access_token');
       
+      // Prepare the data in the format expected by the backend
+      const patientData = {
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        role: 'patient',
+        dateOfBirth: formData.dateOfBirth,
+        address: formData.address,
+        emergencyContact: formData.emergencyContact
+      };
 
-      await axios.post('http://localhost:3001/users', formData, {
+      console.log('Sending patient data:', patientData);
+      
+      const response = await axios({
+        method: 'post',
+        url: 'http://localhost:3001/patients',
+        data: patientData,
         headers: {
           'Authorization': `Bearer ${token}`,
-        }
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        responseType: 'json'
       });
       
+      console.log('Patient created successfully:', response.data);
+      console.log('Response headers:', response.headers);
       setSuccess('Patient créé avec succès');
       setShowAddModal(false);
       resetForm();
       fetchPatients();
     } catch (error: any) {
       console.error('Error adding patient:', error);
-      setError(error.response?.data?.message || 'Erreur lors de la création du patient');
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Full error response:', JSON.stringify(error.response, null, 2));
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        console.error('Response headers:', error.response.headers);
+        
+        // Handle validation errors from the backend
+        const responseData = error.response.data;
+        console.log('Raw error messages:', responseData.message); // Log the raw error messages
+        
+        if (Array.isArray(responseData.message)) {
+          // If the backend returns an array of error messages
+          const errorMessages = responseData.message.join('\n');
+          setError(`Erreur de validation :\n${errorMessages}`);
+        } else if (responseData.message) {
+          // If there's a single error message
+          setError(`Erreur : ${responseData.message}`);
+        } else if (responseData.error) {
+          // If there's an error field
+          setError(`Erreur : ${responseData.error}`);
+        } else {
+          // Fallback error message
+          setError('Une erreur est survenue lors de la création du patient');
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response received:', error.request);
+        setError('Pas de réponse du serveur. Veuillez vérifier votre connexion.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Request setup error:', error.message);
+        setError('Erreur lors de la configuration de la requête');
+      }
     } finally {
       setFormLoading(false);
     }
@@ -113,21 +184,34 @@ const PatientManagement: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       
-      console.log('Modification du patient:', selectedPatient.id);
-      console.log('Données à envoyer:', editFormData);
+      // Prepare the data in the format expected by the backend
+      const patientData = {
+        email: editFormData.email || selectedPatient.email,
+        firstName: editFormData.firstName || selectedPatient.firstName,
+        lastName: editFormData.lastName || selectedPatient.lastName,
+        phone: editFormData.phone || selectedPatient.phone,
+        dateOfBirth: editFormData.dateOfBirth || selectedPatient.dateOfBirth,
+        address: editFormData.address || selectedPatient.address,
+        emergencyContact: editFormData.emergencyContact || selectedPatient.emergencyContact
+      };
+
+      console.log('Updating patient:', selectedPatient.id);
+      console.log('Sending data:', patientData);
       
-     
-      const response = await axios.put(
-        `http://localhost:3001/users/${selectedPatient.id}`, 
-        editFormData, 
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          }
-        }
-      );
+      const response = await axios({
+        method: 'put',
+        url: `http://localhost:3001/patients/${selectedPatient.id}`,
+        data: patientData,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        responseType: 'json'
+      });
       
-      console.log(' Réponse de modification:', response.data);
+      console.log('Update response:', response.data);
+      console.log('Response headers:', response.headers);
       
       setSuccess('Patient modifié avec succès');
       setShowEditModal(false);
@@ -138,11 +222,30 @@ const PatientManagement: React.FC = () => {
       console.error('❌ Erreur détaillée lors de la modification:', error);
       
       if (error.response) {
-        console.error('Status:', error.response.status);
-        console.error('Data:', error.response.data);
-        console.error('Headers:', error.response.headers);
+        console.error('❌ Réponse du serveur:', error.response.data);
+        console.error('❌ Status:', error.response.status);
         
-        setError(error.response?.data?.message || `Erreur ${error.response.status} lors de la modification`);
+        const responseData = error.response.data;
+        
+        if (Array.isArray(responseData.message)) {
+          // If the backend returns an array of error messages
+          const errorMessages = responseData.message.join('\n');
+          setError(`Erreur de validation :\n${errorMessages}`);
+        } else if (responseData.message) {
+          // If there's a single error message
+          setError(`Erreur : ${responseData.message}`);
+        } else if (responseData.error) {
+          // If there's an error field
+          setError(`Erreur : ${responseData.error}`);
+        } else if (responseData.errors) {
+          // Handle nested errors object if present
+          const errorMessages = Object.entries(responseData.errors)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('\n');
+          setError(`Erreur de validation :\n${errorMessages}`);
+        } else {
+          setError('Une erreur est survenue lors de la modification du patient');
+        }
       } else if (error.request) {
         console.error('Aucune réponse du serveur:', error.request);
         setError('Serveur inaccessible');
@@ -205,8 +308,12 @@ const PatientManagement: React.FC = () => {
       email: '',
       password: '',
       firstName: '',
-      lastName: '',
-      role: 'patient'
+      lastName: '', 
+      phone: '',
+      role: 'patient',
+      dateOfBirth: '',
+      address: '',
+      emergencyContact: ''
     });
   };
 
@@ -221,6 +328,10 @@ const PatientManagement: React.FC = () => {
       email: patient.email,
       firstName: patient.firstName,
       lastName: patient.lastName,
+      phone: patient.phone,
+      dateOfBirth: patient.dateOfBirth,
+      address: patient.address,
+      emergencyContact: patient.emergencyContact,
       isActive: patient.isActive
     });
     setShowEditModal(true);
@@ -421,57 +532,108 @@ const PatientManagement: React.FC = () => {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un Patient</h3>
                 
                 <form onSubmit={handleAddPatient} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="patient@exemple.com"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
-                    <input
-                      type="password"
-                      required
-                      value={formData.password}
-                      onChange={(e) => setFormData({...formData, password: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Prénom</label>
+                      <label className="block text-sm font-medium text-gray-700">Prénom *</label>
                       <input
                         type="text"
                         required
                         value={formData.firstName}
                         onChange={(e) => setFormData({...formData, firstName: e.target.value})}
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Jean"
+                        placeholder="Prénom"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Nom</label>
+                      <label className="block text-sm font-medium text-gray-700">Nom *</label>
                       <input
                         type="text"
                         required
                         value={formData.lastName}
                         onChange={(e) => setFormData({...formData, lastName: e.target.value})}
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Dupont"
+                        placeholder="Nom"
                       />
                     </div>
                   </div>
                   
-                  <input type="hidden" value="patient" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Email *</label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="email@exemple.com"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Mot de passe *</label>
+                      <input
+                        type="password"
+                        required
+                        value={formData.password}
+                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Téléphone *</label>
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="+216 XX XXX XXX"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Date de naissance *</label>
+                      <input
+                        type="date"
+                        required
+                        value={formData.dateOfBirth}
+                        onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Adresse *</label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={formData.address}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Adresse complète"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Contact d'urgence *</label>
+                    <input
+                      type="tel"
+                      required
+                      value={formData.emergencyContact}
+                      onChange={(e) => setFormData({...formData, emergencyContact: e.target.value})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="+216 XX XXX XXX"
+                    />
+                  </div>
+                  
+                  <input type="hidden" name="role" value="patient" />
                   
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
@@ -506,51 +668,50 @@ const PatientManagement: React.FC = () => {
                 
                 <form onSubmit={handleEditPatient} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <label className="block text-sm font-medium text-gray-700">Date de naissance *</label>
                     <input
-                      type="email"
+                      type="date"
                       required
-                      value={editFormData.email || ''}
-                      onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                      value={editFormData.dateOfBirth || ''}
+                      onChange={(e) => setEditFormData({...editFormData, dateOfBirth: e.target.value})}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Nouveau mot de passe (laisser vide pour ne pas changer)
-                    </label>
-                    <input
-                      type="password"
-                      value={editFormData.password || ''}
-                      onChange={(e) => setEditFormData({...editFormData, password: e.target.value})}
+                    <label className="block text-sm font-medium text-gray-700">Adresse *</label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={editFormData.address || ''}
+                      onChange={(e) => setEditFormData({...editFormData, address: e.target.value})}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Laisser vide pour garder l'actuel"
+                      placeholder="Adresse complète"
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Prénom</label>
-                      <input
-                        type="text"
-                        required
-                        value={editFormData.firstName || ''}
-                        onChange={(e) => setEditFormData({...editFormData, firstName: e.target.value})}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Nom</label>
-                      <input
-                        type="text"
-                        required
-                        value={editFormData.lastName || ''}
-                        onChange={(e) => setEditFormData({...editFormData, lastName: e.target.value})}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Téléphone *</label>
+                    <input
+                      type="tel"
+                      required
+                      value={editFormData.phone || ''}
+                      onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="+216 XX XXX XXX"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Contact d'urgence *</label>
+                    <input
+                      type="tel"
+                      required
+                      value={editFormData.emergencyContact || ''}
+                      onChange={(e) => setEditFormData({...editFormData, emergencyContact: e.target.value})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="+216 XX XXX XXX"
+                    />
                   </div>
                   
                   <div className="flex justify-end space-x-3 pt-4">

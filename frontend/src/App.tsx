@@ -9,6 +9,7 @@ import DoctorDashboard from './dashboards/DoctorDashboard';
 import PatientDashboard from './dashboards/PatientDashboard';
 import UserManagement from './components/users/UserManagement';
 import PatientManagement from './components/patients/PatientManagement';
+import DoctorSpecialtiesList from './components/specialities/DoctorSpecialtiesList';
 
 // Composants placeholder pour les routes non implémentées
 const ClinicsManagement: React.FC = () => (
@@ -219,6 +220,18 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         } 
       />
+      
+    
+      
+      <Route 
+        path="/specialities" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'doctor', 'receptionist']}>
+            <DoctorSpecialtiesList />
+          </ProtectedRoute>
+        } 
+      />
+      
       
       {/* Routes communes */}
       <Route 

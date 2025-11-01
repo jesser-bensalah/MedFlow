@@ -7,6 +7,7 @@ interface User {
   firstName: string;
   lastName: string;
   role: string;
+  specialite: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -17,6 +18,7 @@ interface CreateUserData {
   firstName: string;
   lastName: string;
   role: string;
+  specialite?: string;
 }
 
 interface UpdateUserData {
@@ -25,6 +27,7 @@ interface UpdateUserData {
   firstName?: string;
   lastName?: string;
   role?: string;
+  specialite?: string;
   isActive?: boolean;
 }
 
@@ -46,7 +49,8 @@ const UserManagement: React.FC = () => {
     password: '',
     firstName: '',
     lastName: '',
-    role: 'receptionist'
+    role: 'receptionist',
+    specialite: ''
   });
   
   const [editFormData, setEditFormData] = useState<UpdateUserData>({});
@@ -83,9 +87,17 @@ const UserManagement: React.FC = () => {
     
     try {
       const token = localStorage.getItem('access_token');
-      await axios.post('http://localhost:3001/users', formData, {
+      // Prepare the data to send
+      const userData = {
+        ...formData,
+        // Only include specialite if role is doctor
+        ...(formData.role !== 'doctor' && { specialite: undefined })
+      };
+      
+      const response = await axios.post('http://localhost:3001/users', userData, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       
@@ -95,7 +107,8 @@ const UserManagement: React.FC = () => {
       fetchUsers();
     } catch (error: any) {
       console.error('Error adding user:', error);
-      setError(error.response?.data?.message || 'Erreur lors de la création de l\'utilisateur');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Erreur lors de la création de l\'utilisateur';
+      setError(errorMessage);
     } finally {
       setFormLoading(false);
     }
@@ -280,7 +293,7 @@ const UserManagement: React.FC = () => {
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Ajouter un Utilisateur
+            Ajouter un utilisateur
           </button>
         </div>
 
@@ -397,7 +410,7 @@ const UserManagement: React.FC = () => {
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
               <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un Utilisateur</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un utilisateur</h3>
                 
                 <form onSubmit={handleAddUser} className="space-y-4">
                   <div>
@@ -450,7 +463,7 @@ const UserManagement: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700">Rôle</label>
                     <select
                       value={formData.role}
-                      onChange={(e) => setFormData({...formData, role: e.target.value})}
+                      onChange={(e) => setFormData({...formData, role: e.target.value, ...(e.target.value !== 'doctor' && { specialite: '' })})}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="receptionist">Réceptionniste</option>
@@ -459,6 +472,30 @@ const UserManagement: React.FC = () => {
                       <option value="admin">Administrateur</option>
                     </select>
                   </div>
+                  
+                  {formData.role === 'doctor' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Spécialité</label>
+                      <select
+                        value={formData.specialite || ''}
+                        onChange={(e) => setFormData({...formData, specialite: e.target.value})}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      >
+                        <option value="">Sélectionner une spécialité</option>
+                        <option value="Cardiologie">Cardiologie</option>
+                        <option value="Dermatologie">Dermatologie</option>
+                        <option value="Gynécologie">Gynécologie</option>
+                        <option value="Médecine générale">Médecine générale</option>
+                        <option value="Neurologie">Neurologie</option>
+                        <option value="Ophtalmologie">Ophtalmologie</option>
+                        <option value="Pédiatrie">Pédiatrie</option>
+                        <option value="Psychiatrie">Psychiatrie</option>
+                        <option value="Radiologie">Radiologie</option>
+                        <option value="Urologie">Urologie</option>
+                      </select>
+                    </div>
+                  )}
                   
                   <div className="flex justify-end space-x-3 pt-4">
                     <button

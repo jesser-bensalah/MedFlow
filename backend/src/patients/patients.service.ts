@@ -37,6 +37,9 @@ export class PatientsService {
       password: hashedPassword,
       firstName: createPatientDto.firstName,
       lastName: createPatientDto.lastName,
+      phone: createPatientDto.phone,
+      address: createPatientDto.address,
+      emergencyContact: createPatientDto.emergencyContact,
       role: UserRole.PATIENT, 
       isActive: true, 
     });
