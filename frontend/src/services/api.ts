@@ -111,7 +111,18 @@ export const appointmentService = {
     }
   },
 
-  // Get appointment by ID
+  // Get appointments by doctor id
+  getAppointmentsByDoctor: async (doctorId: number): Promise<any[]> => {
+    try {
+      const response = await api.get(`/appointment/doctor/${doctorId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching appointments for doctor ${doctorId}:`, error);
+      throw error;
+    }
+  },
+
+  // Get appointment by id
   getAppointmentById: async (id: number): Promise<any> => {
     try {
       const response = await api.get(`/appointment/${id}`);
@@ -138,7 +149,18 @@ export const appointmentService = {
     try {
       await api.delete(`/appointment/${id}`);
     } catch (error) {
-      console.error(`Error deleting appointment ${id}:`, error);
+      console.error('Error deleting appointment:', error);
+      throw error;
+    }
+  },
+
+  // Update appointment status
+  updateAppointmentStatus: async (id: number, status: string): Promise<any> => {
+    try {
+      const response = await api.patch(`/appointment/${id}/status`, { status });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
       throw error;
     }
   },

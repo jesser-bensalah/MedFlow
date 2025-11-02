@@ -10,6 +10,7 @@ import PatientDashboard from './dashboards/PatientDashboard';
 import UserManagement from './components/users/UserManagement';
 import PatientManagement from './components/patients/PatientManagement';
 import DoctorSpecialtiesList from './components/specialities/DoctorSpecialtiesList';
+import ListRendezVous from './components/rendezvous/ListRendezVous';
 
 // Composants placeholder pour les routes non implémentées
 const ClinicsManagement: React.FC = () => (
@@ -249,6 +250,15 @@ const AppRoutes: React.FC = () => {
           isAuthenticated ? 
             <Navigate to="/dashboard" replace /> : 
             <Navigate to="/login" replace />
+        } 
+      />
+
+      <Route 
+        path="/rdv" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor']}>
+            <ListRendezVous />
+          </ProtectedRoute>
         } 
       />
       

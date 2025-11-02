@@ -142,11 +142,38 @@ export class AppointmentService {
   }
 
   async delete(id: number): Promise<Appointment | null> {
-      const appointment = await this.appointmentRepository.findOne({ where: { id } });
-      if (!appointment) {
-          return null;
+    const appointment = await this.appointmentRepository.findOne({ where: { id } });
+    if (!appointment) {
+      return null;
+    }
+    await this.appointmentRepository.remove(appointment);
+    return appointment;
+  }
+
+  async findByDoctorId(doctorId: number): Promise<Appointment[]> {
+    return this.appointmentRepository.find({
+      where: { 
+        doctor: { id: doctorId } 
+      },
+      relations: ['patient', 'doctor'],
+      order: {
+        date: 'ASC',
+        time: 'ASC'
       }
-      await this.appointmentRepository.delete(id);
-      return appointment;
+    });
+  }
+
+  async updateStatus(id: number, status: 'Planifié' | 'Confirmé' | 'Annulé' | 'Terminé'): Promise<Appointment | null> {
+    const appointment = await this.appointmentRepository.findOne({ 
+      where: { id },
+      relations: ['patient', 'doctor']
+    });
+    
+    if (!appointment) {
+      return null;
+    }
+
+    appointment.status = status;
+    return this.appointmentRepository.save(appointment);
   }
 }

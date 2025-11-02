@@ -25,7 +25,7 @@ const SideNav: React.FC = () => {
   const doctorLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Consultations', path: '/consultations', icon: '🩺' },
-    { name: 'Rendez-vous', path: '/appointments', icon: '📅' },
+    { name: 'Rendez-vous', path: '/rdv', icon: '📅' },
     { name: 'Ordonnances', path: '/prescriptions', icon: '📝' },
   ];
 
