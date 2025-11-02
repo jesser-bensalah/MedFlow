@@ -7,7 +7,6 @@ import {
   faUserDoctor, 
   faSearch, 
   faPlus, 
-  faTrash, 
   faEdit, 
   faEye, 
   faCalendar,
@@ -123,12 +122,10 @@ const DoctorSpecialtiesList: React.FC = () => {
         }
     }, [searchTerm, doctors]);
 
-    // Fetch patients from API
     const fetchPatients = useCallback(async () => {
         try {
             setIsLoadingPatients(true);
             
-            // Fetch patients from the API
             const response = await userService.getUsersByRole('patient');
             
             if (response && Array.isArray(response)) {
@@ -142,7 +139,6 @@ const DoctorSpecialtiesList: React.FC = () => {
             }
         } catch (error) {
             console.error('Error fetching patients:', error);
-            // Handle error appropriately
         } finally {
             setIsLoadingPatients(false);
         }
@@ -186,7 +182,6 @@ const DoctorSpecialtiesList: React.FC = () => {
     }
 };
 
-    // Time slots are already defined at the component level
 
     if (loading) {
         return (

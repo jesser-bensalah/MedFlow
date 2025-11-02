@@ -69,7 +69,6 @@ export class AppointmentService {
       // Verify doctor exists
       const doctor = await queryRunner.manager.findOne(User, { 
         where: { id: createAppointmentDto.doctorId }
-        // No need for relations since specialite is a direct property
       });
       if (!doctor) {
         throw new NotFoundException('Doctor not found');
@@ -103,7 +102,7 @@ export class AppointmentService {
         doctorSpecialty: doctor.specialite
       });
 
-      // Create new appointment with properly mapped fields
+      // Create new appointment 
       const appointment = this.appointmentRepository.create({
         date: appointmentDate,
         time: createAppointmentDto.appointmentTime,
@@ -133,7 +132,7 @@ export class AppointmentService {
       return null;
     }
 
-    // If date is being updated, convert string to Date
+    //Convert date
     if (updateAppointmentDto.date && typeof updateAppointmentDto.date === 'string') {
       updateAppointmentDto.date = new Date(updateAppointmentDto.date);
     }

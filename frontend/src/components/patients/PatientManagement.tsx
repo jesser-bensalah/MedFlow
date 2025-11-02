@@ -99,7 +99,6 @@ const PatientManagement: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       
-      // Prepare the data in the format expected by the backend
       const patientData = {
         email: formData.email,
         password: formData.password,
@@ -135,37 +134,28 @@ const PatientManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error adding patient:', error);
       if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         console.error('Full error response:', JSON.stringify(error.response, null, 2));
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
         console.error('Response headers:', error.response.headers);
         
-        // Handle validation errors from the backend
         const responseData = error.response.data;
-        console.log('Raw error messages:', responseData.message); // Log the raw error messages
+        console.log('Raw error messages:', responseData.message); 
         
         if (Array.isArray(responseData.message)) {
-          // If the backend returns an array of error messages
           const errorMessages = responseData.message.join('\n');
           setError(`Erreur de validation :\n${errorMessages}`);
         } else if (responseData.message) {
-          // If there's a single error message
           setError(`Erreur : ${responseData.message}`);
         } else if (responseData.error) {
-          // If there's an error field
           setError(`Erreur : ${responseData.error}`);
         } else {
-          // Fallback error message
           setError('Une erreur est survenue lors de la création du patient');
         }
       } else if (error.request) {
-        // The request was made but no response was received
         console.error('No response received:', error.request);
         setError('Pas de réponse du serveur. Veuillez vérifier votre connexion.');
       } else {
-        // Something happened in setting up the request that triggered an Error
         console.error('Request setup error:', error.message);
         setError('Erreur lors de la configuration de la requête');
       }
@@ -184,7 +174,6 @@ const PatientManagement: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       
-      // Prepare the data in the format expected by the backend
       const patientData = {
         email: editFormData.email || selectedPatient.email,
         firstName: editFormData.firstName || selectedPatient.firstName,
@@ -226,19 +215,14 @@ const PatientManagement: React.FC = () => {
         console.error('❌ Status:', error.response.status);
         
         const responseData = error.response.data;
-        
         if (Array.isArray(responseData.message)) {
-          // If the backend returns an array of error messages
           const errorMessages = responseData.message.join('\n');
           setError(`Erreur de validation :\n${errorMessages}`);
         } else if (responseData.message) {
-          // If there's a single error message
           setError(`Erreur : ${responseData.message}`);
         } else if (responseData.error) {
-          // If there's an error field
           setError(`Erreur : ${responseData.error}`);
         } else if (responseData.errors) {
-          // Handle nested errors object if present
           const errorMessages = Object.entries(responseData.errors)
             .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
             .join('\n');
@@ -526,7 +510,7 @@ const PatientManagement: React.FC = () => {
 
         {/* Modal d'ajout */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un Patient</h3>
@@ -659,7 +643,7 @@ const PatientManagement: React.FC = () => {
 
         {/* Modal de modification */}
         {showEditModal && selectedPatient && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -738,7 +722,7 @@ const PatientManagement: React.FC = () => {
 
         {/* Modal de suppression */}
         {showDeleteModal && selectedPatient && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Confirmer la suppression</h3>

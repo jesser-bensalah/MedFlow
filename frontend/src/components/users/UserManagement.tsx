@@ -87,10 +87,8 @@ const UserManagement: React.FC = () => {
     
     try {
       const token = localStorage.getItem('access_token');
-      // Prepare the data to send
       const userData = {
         ...formData,
-        // Only include specialite if role is doctor
         ...(formData.role !== 'doctor' && { specialite: undefined })
       };
       
@@ -407,7 +405,7 @@ const UserManagement: React.FC = () => {
 
         {/* Modal d'ajout */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un utilisateur</h3>
@@ -521,7 +519,7 @@ const UserManagement: React.FC = () => {
 
         {/* Modal de modification */}
         {showEditModal && selectedUser && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Modifier l'Utilisateur</h3>
@@ -616,7 +614,7 @@ const UserManagement: React.FC = () => {
 
         {/* Modal de suppression */}
         {showDeleteModal && selectedUser && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Confirmer la suppression</h3>

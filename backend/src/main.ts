@@ -13,16 +13,12 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
-    // Temporarily disable forbidNonWhitelisted to see if that's causing the issue
     forbidNonWhitelisted: false,
     transform: true,
-    // Enable detailed error messages
     disableErrorMessages: false,
-    // Enable auto-transformation of payloads
     transformOptions: {
       enableImplicitConversion: true,
     },
-    // Detailed error formatting
     exceptionFactory: (errors) => {
       const result = errors.map((error) => ({
         property: error.property,
