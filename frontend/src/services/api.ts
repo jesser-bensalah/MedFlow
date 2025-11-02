@@ -166,6 +166,182 @@ export const appointmentService = {
   },
 };
 
+export const clinicService = {
+  // Get all clinics
+  getAllClinics: async (): Promise<any[]> => {
+    try {
+      const response = await api.get('/clinics');
+      return response.data.map((clinic: any) => ({
+        id: clinic.idClinic,
+        name: clinic.nomClinic,
+        address: clinic.adresseClinic,
+        phone: clinic.telephoneClinic,
+        email: clinic.emailClinic,
+        isActive: clinic.isActive || true,
+        listeMedecins: clinic.listeMedecins || [],
+        listePatients: clinic.listePatients || []
+      }));
+    } catch (error) {
+      console.error('Error fetching clinics:', error);
+      throw error;
+    }
+  },
+
+  // Get clinic by ID
+  getClinicById: async (id: number): Promise<any> => {
+    try {
+      const response = await api.get(`/clinics/${id}`);
+      const clinic = response.data;
+      return {
+        id: clinic.idClinic,
+        name: clinic.nomClinic,
+        address: clinic.adresseClinic,
+        phone: clinic.telephoneClinic,
+        email: clinic.emailClinic,
+        isActive: clinic.isActive || true,
+        listeMedecins: clinic.listeMedecins || [],
+        listePatients: clinic.listePatients || []
+      };
+    } catch (error) {
+      console.error(`Error fetching clinic with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // clinic methods
+  createClinic: async (clinicData: {
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  isActive?: boolean;
+}): Promise<any> => {
+  try {
+    if (!clinicData.name) {
+      throw new Error('Clinic name is required');
+    }
+
+    const backendData = {
+      nomClinic: clinicData.name,
+      adresseClinic: clinicData.address || null,
+      telephoneClinic: clinicData.phone || null,
+      emailClinic: clinicData.email || null,
+      isActive: clinicData.isActive !== undefined ? clinicData.isActive : true,
+      listeMedecins: '[]',  
+      listePatients: '[]'   
+    };
+    
+    console.log('Sending clinic data to backend:', JSON.stringify(backendData, null, 2));
+    const response = await api.post('/clinics', backendData);
+    
+    return {
+      id: response.data.idClinic,
+      name: response.data.nomClinic,
+      address: response.data.adresseClinic,
+      phone: response.data.telephoneClinic,
+      email: response.data.emailClinic,
+      isActive: response.data.isActive || true,
+      listeMedecins: response.data.listeMedecins || [],
+      listePatients: response.data.listePatients || []
+    };
+  } catch (error) {
+    console.error('Error creating clinic:', error);
+    throw error;
+  }
+},
+
+  updateClinic: async (id: number, updateData: {
+    name?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    isActive?: boolean;
+  }): Promise<any> => {
+    try {
+      const backendData: any = {};
+      if (updateData.name !== undefined) backendData.nomClinic = updateData.name;
+      if (updateData.address !== undefined) backendData.adresseClinic = updateData.address;
+      if (updateData.phone !== undefined) backendData.telephoneClinic = updateData.phone;
+      if (updateData.email !== undefined) backendData.emailClinic = updateData.email;
+      if (updateData.isActive !== undefined) backendData.isActive = updateData.isActive;
+      
+      const response = await api.put(`/clinics/${id}`, backendData);
+      
+      return {
+        id: response.data.idClinic,
+        name: response.data.nomClinic,
+        address: response.data.adresseClinic,
+        phone: response.data.telephoneClinic,
+        email: response.data.emailClinic,
+        isActive: response.data.isActive || true,
+        listeMedecins: response.data.listeMedecins || [],
+        listePatients: response.data.listePatients || []
+      };
+    } catch (error) {
+      console.error(`Error updating clinic with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deleteClinic: async (id: number): Promise<void> => {
+    try {
+      await api.delete(`/clinics/${id}`);
+    } catch (error) {
+      console.error(`Error deleting clinic with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  toggleClinicStatus: async (id: number, isActive: boolean): Promise<any> => {
+    try {
+      const response = await api.patch(`/clinics/${id}`, { isActive });
+      
+      return {
+        id: response.data.idClinic,
+        name: response.data.nomClinic,
+        address: response.data.adresseClinic,
+        phone: response.data.telephoneClinic,
+        email: response.data.emailClinic,
+        isActive: response.data.isActive || true,
+        listeMedecins: response.data.listeMedecins || [],
+        listePatients: response.data.listePatients || []
+      };
+    } catch (error) {
+      console.error(`Error toggling status for clinic with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  addDoctorToClinic: async (clinicId: number, doctorId: string): Promise<any> => {
+    try {
+      const response = await api.post(`/clinics/${clinicId}/medecins/${doctorId}`);
+      
+      return {
+        id: response.data.idClinic,
+        name: response.data.nomClinic,
+        address: response.data.adresseClinic,
+        phone: response.data.telephoneClinic,
+        email: response.data.emailClinic,
+        isActive: response.data.isActive || true,
+        listeMedecins: response.data.listeMedecins || [],
+        listePatients: response.data.listePatients || []
+      };
+    } catch (error) {
+      console.error(`Error adding doctor ${doctorId} to clinic ${clinicId}:`, error);
+      throw error;
+    }
+  },
+
+  removeDoctorFromClinic: async (clinicId: number, doctorId: string): Promise<void> => {
+    try {
+      await api.delete(`/clinics/${clinicId}/medecins/${doctorId}`);
+    } catch (error) {
+      console.error(`Error removing doctor ${doctorId} from clinic ${clinicId}:`, error);
+      throw error;
+    }
+  },
+};
+
 export const userService = {
   // Get all users (admin only)
   getAllUsers: async (): Promise<any[]> => {

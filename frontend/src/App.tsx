@@ -11,18 +11,9 @@ import UserManagement from './components/users/UserManagement';
 import PatientManagement from './components/patients/PatientManagement';
 import DoctorSpecialtiesList from './components/specialities/DoctorSpecialtiesList';
 import ListRendezVous from './components/rendezvous/ListRendezVous';
+import HistoriqueConsultations from './components/patients/HistoriqueConsultations';
+import ClinicPage from './components/clinics/ClinicPage';
 
-// Composants placeholder pour les routes non implémentées
-const ClinicsManagement: React.FC = () => (
-  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Cliniques</h1>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
-      </div>
-    </div>
-  </div>
-);
 
 const BillingManagement: React.FC = () => (
   <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -46,16 +37,6 @@ const SettingsManagement: React.FC = () => (
   </div>
 );
 
-const AppointmentsManagement: React.FC = () => (
-  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Prise de Rendez-vous</h1>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
-      </div>
-    </div>
-  </div>
-);
 
 const ConsultationsManagement: React.FC = () => (
   <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -166,14 +147,7 @@ const AppRoutes: React.FC = () => {
         } 
       />
       
-      <Route 
-        path="/clinics" 
-        element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <ClinicsManagement />
-          </ProtectedRoute>
-        } 
-      />
+  
       
       <Route 
         path="/settings" 
@@ -190,15 +164,6 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
             <PatientManagement />
-          </ProtectedRoute>
-        } 
-      />
-      
-      <Route 
-        path="/appointments" 
-        element={
-          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor']}>
-            <AppointmentsManagement />
           </ProtectedRoute>
         } 
       />
@@ -258,6 +223,24 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor']}>
             <ListRendezVous />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/historique-consultations" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'patient', 'doctor', 'receptionist']}>
+            <HistoriqueConsultations />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/clinics" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor']}> 
+            <ClinicPage />
           </ProtectedRoute>
         } 
       />

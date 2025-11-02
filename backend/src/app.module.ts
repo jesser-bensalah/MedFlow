@@ -5,6 +5,9 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PatientsModule } from './patients/patients.module';
 import { AppointmentModule } from './appointment/appointment.module';
+import { ClinicModule } from './clinic/clinic.module';
+import { OrdonnanceModule } from './ordonnance/ordonnance.module';
+import { FactureModule } from './facture/facture.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { AppointmentModule } from './appointment/appointment.module';
     UsersModule,
     PatientsModule,
     AppointmentModule,
+    ClinicModule,
+    OrdonnanceModule,
+    FactureModule,
   ],
 })
 export class AppModule { }
