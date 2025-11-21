@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { clinicService } from '../../services/api';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { clinicService, userService } from '../../contexts/api';
+import { toast } from 'react-toastify';
+import { PencilIcon, TrashIcon, UserPlusIcon } from '@heroicons/react/24/solid';
+
+interface Doctor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
 
 export interface Clinic {
   id: number;
@@ -38,8 +46,12 @@ const ClinicPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAssignDoctorModal, setShowAssignDoctorModal] = useState(false);
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
- 
+  const [editingClinic, setEditingClinic] = useState<Clinic | null>(null);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>('');
+
   const [formData, setFormData] = useState<CreateClinicDto>({
     name: '',
     address: '',
@@ -52,20 +64,30 @@ const ClinicPage: React.FC = () => {
   const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
-    fetchClinics();
+    loadClinics();
   }, []);
+
+  const loadClinics = async () => {
+    try {
+      const data = await clinicService.getAllClinics();
+      setClinics(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading clinics:', error);
+      setError('Erreur lors du chargement des cliniques');
+      setLoading(false);
+    }
+  };
 
   const fetchClinics = async () => {
     try {
       setLoading(true);
-      setError('');
-      
       const data = await clinicService.getAllClinics();
       setClinics(data);
-    } catch (error: any) {
+      setLoading(false);
+    } catch (error) {
       console.error('Error fetching clinics:', error);
-      setError(error.message || 'Erreur lors du chargement des cliniques');
-    } finally {
+      setError('Erreur lors de la récupération des cliniques');
       setLoading(false);
     }
   };
@@ -80,7 +102,7 @@ const ClinicPage: React.FC = () => {
       setSuccess('Clinique ajoutée avec succès');
       setShowAddModal(false);
       resetForm();
-      await fetchClinics();
+      loadClinics();
     } catch (error: any) {
       console.error('Error adding clinic:', error);
       setError(error.message || 'Erreur lors de l\'ajout de la clinique');
@@ -102,7 +124,7 @@ const ClinicPage: React.FC = () => {
       setShowEditModal(false);
       setSelectedClinic(null);
       setEditFormData({});
-      await fetchClinics();
+      loadClinics();
     } catch (error: any) {
       console.error('Error updating clinic:', error);
       setError(error.message || 'Erreur lors de la modification de la clinique');
@@ -122,7 +144,7 @@ const ClinicPage: React.FC = () => {
       setSuccess('Clinique supprimée avec succès');
       setShowDeleteModal(false);
       setSelectedClinic(null);
-      await fetchClinics();
+      loadClinics();
     } catch (error: any) {
       console.error('Error deleting clinic:', error);
       setError(error.message || 'Erreur lors de la suppression de la clinique');
@@ -135,7 +157,7 @@ const ClinicPage: React.FC = () => {
     try {
       await clinicService.toggleClinicStatus(clinic.id, !clinic.isActive);
       setSuccess(`Clinique ${!clinic.isActive ? 'activée' : 'désactivée'} avec succès`);
-      await fetchClinics();
+      loadClinics();
     } catch (error: any) {
       console.error('Error toggling clinic status:', error);
       setError(error.message || 'Erreur lors du changement de statut');
@@ -171,12 +193,66 @@ const ClinicPage: React.FC = () => {
     setShowDeleteModal(true);
   };
 
+  const handleDelete = async () => {
+    if (!selectedClinic) return;
+    
+    try {
+      await clinicService.deleteClinic(selectedClinic.id);
+      toast.success('Clinique supprimée avec succès');
+      setShowDeleteModal(false);
+      loadClinics();
+    } catch (error) {
+      console.error('Error deleting clinic:', error);
+      toast.error('Erreur lors de la suppression de la clinique');
+    }
+  };
+
+  const openAssignDoctorModal = (clinic: Clinic) => {
+    setSelectedClinic(clinic);
+    setSelectedDoctorId('');
+    loadDoctors();
+    setShowAssignDoctorModal(true);
+  };
+
+  const loadDoctors = async () => {
+    try {
+      const data = await userService.getDoctors();
+      setDoctors(data);
+    } catch (error) {
+      console.error('Error loading doctors:', error);
+      toast.error('Erreur lors du chargement des médecins');
+    }
+  };
+
+  const handleAssignDoctor = async () => {
+    if (!selectedClinic || !selectedDoctorId) {
+      toast.error('Veuillez sélectionner un médecin');
+      return;
+    }
+
+    try {
+      // Add doctor to clinic 
+      await clinicService.addDoctorToClinic(selectedClinic.id, selectedDoctorId);
+      
+      toast.success('Médecin affecté avec succès à la clinique');
+      setShowAssignDoctorModal(false);
+      loadClinics();
+    } catch (error) {
+      console.error('Error assigning doctor:', error);
+      toast.error('Erreur lors de l\'affectation du médecin');
+    }
+  };
+
   const closeModals = () => {
     setShowAddModal(false);
     setShowEditModal(false);
     setShowDeleteModal(false);
+    setShowAssignDoctorModal(false);
     setSelectedClinic(null);
+    setEditingClinic(null);
     setEditFormData({});
+    setSelectedDoctorId('');
+    setError('');
   };
 
   // Clear messages after 5 seconds
@@ -248,15 +324,17 @@ const ClinicPage: React.FC = () => {
               {clinics.length} clinique(s) trouvée(s)
             </p>
           </div>
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors flex items-center"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Ajouter une clinique
-          </button>
+          <div className="flex space-x-3">
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Ajouter une clinique
+            </button>
+          </div>
         </div>
 
         {/* Clinics Table */}
@@ -330,28 +408,35 @@ const ClinicPage: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
                                 <button
-                                    onClick={() => openEditModal(clinic)}
-                                    className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-md transition-colors"
-                                    title="Modifier"
-                                >
-                                    <PencilIcon className="h-5 w-5" />
-                                </button>
-                                <button
-                                    onClick={() => openDeleteModal(clinic)}
-                                    className="text-red-600 hover:text-red-900 bg-red-50 p-2 rounded-md transition-colors"
-                                    title="Supprimer"
-                                >
-                                    <TrashIcon className="h-5 w-5" />
-                                </button>
+                                onClick={() => openEditModal(clinic)}
+                                className="text-blue-600 hover:text-blue-900 mr-3"
+                                title="Modifier"
+                              >
+                                <PencilIcon className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => openAssignDoctorModal(clinic)}
+                                className="text-green-600 hover:text-green-900 mr-3"
+                                title="Affecter un médecin"
+                              >
+                                <UserPlusIcon className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => openDeleteModal(clinic)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Supprimer"
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
                             </div>
                         </td>
                     </tr>
                 ))}
-                              </tbody>
-                          </table>
-          )}
-        </div>
-      </div>
+            </tbody>
+        </table>
+    )}
+</div>
+</div>
 
       {/* Add Clinic Modal */}
       {showAddModal && (
@@ -586,6 +671,51 @@ const ClinicPage: React.FC = () => {
               </div>
             </div>
           </div>
+      )}
+
+      {/* Assign Doctor Modal */}
+      {showAssignDoctorModal && selectedClinic && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={closeModals}></div>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative z-10">
+            <h3 className="text-lg font-medium mb-4">Affecter un médecin à {selectedClinic.name}</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sélectionner un médecin
+              </label>
+              <select
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                value={selectedDoctorId}
+                onChange={(e) => setSelectedDoctorId(e.target.value)}
+              >
+                <option value="">Sélectionner un médecin</option>
+                {doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.firstName} {doctor.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={closeModals}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleAssignDoctor}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Affecter
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

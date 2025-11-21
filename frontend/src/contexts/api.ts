@@ -4,7 +4,7 @@ import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestCo
 const API_URL = 'http://localhost:3001';
 
 // Create axios instance with default config
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -100,13 +100,24 @@ export const appointmentService = {
     }
   },
 
-  // Get all appointments
+  // Get all appointments (admin only)
   getAppointments: async (): Promise<any[]> => {
     try {
       const response = await api.get('/appointment');
       return response.data;
     } catch (error) {
       console.error('Error fetching appointments:', error);
+      throw error;
+    }
+  },
+
+  // Get appointments by patient ID
+  getAppointmentsByPatient: async (patientId: number): Promise<any[]> => {
+    try {
+      const response = await api.get(`/appointment/patient/${patientId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching appointments for patient ${patientId}:`, error);
       throw error;
     }
   },
@@ -136,7 +147,7 @@ export const appointmentService = {
   // Update appointment
   updateAppointment: async (id: number, updateData: any): Promise<any> => {
     try {
-      const response = await api.patch(`/appointment/${id}`, updateData);
+      const response = await api.put(`/appointment/${id}`, updateData);
       return response.data;
     } catch (error) {
       console.error(`Error updating appointment ${id}:`, error);
@@ -161,6 +172,17 @@ export const appointmentService = {
       return response.data;
     } catch (error) {
       console.error('Error updating appointment status:', error);
+      throw error;
+    }
+  },
+
+  // Request appointment cancellation
+  requestCancellation: async (id: number, reason?: string): Promise<any> => {
+    try {
+      const response = await api.post(`/appointment/${id}/request-cancellation`, { reason });
+      return response.data;
+    } catch (error) {
+      console.error('Error requesting appointment cancellation:', error);
       throw error;
     }
   },
@@ -340,6 +362,62 @@ export const clinicService = {
       throw error;
     }
   },
+};
+
+export const invoiceService = {
+  // Create a new invoice
+  createInvoice: async (invoiceData: any): Promise<any> => {
+    try {
+      const response = await api.post('/factures', invoiceData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+      throw error;
+    }
+  },
+
+  // Get all invoices
+  getInvoices: async (): Promise<any[]> => {
+    try {
+      const response = await api.get('/factures');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      throw error;
+    }
+  },
+
+  // Get invoice by ID
+  getInvoiceById: async (id: string): Promise<any> => {
+    try {
+      const response = await api.get(`/factures/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      throw error;
+    }
+  },
+
+  // Update invoice
+  updateInvoice: async (id: string, updateData: any): Promise<any> => {
+    try {
+      const response = await api.put(`/factures/${id}`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      throw error;
+    }
+  },
+
+  // Delete invoice
+  deleteInvoice: async (id: string): Promise<void> => {
+    try {
+      await api.delete(`/factures/${id}`);
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      throw error;
+    }
+  }
 };
 
 export const userService = {

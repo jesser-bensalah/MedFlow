@@ -27,18 +27,49 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
     
-    const user = this.usersRepository.create({
-      ...createUserDto,
+    const userData: Partial<User> = {
+      email: createUserDto.email,
       password: hashedPassword,
-    });
+      firstName: createUserDto.firstName,
+      lastName: createUserDto.lastName,
+      role: createUserDto.role || UserRole.PATIENT,
+      phone: createUserDto.phone,
+      address: createUserDto.address,
+      emergencyContact: createUserDto.emergencyContact,
+      isActive: true
+    };
+    
+    // Handle date of birth if provided
+    if (createUserDto.dateNaissance) {
+      const date = new Date(createUserDto.dateNaissance);
+      if (isNaN(date.getTime())) {
+        throw new BadRequestException('Format de date de naissance invalide');
+      }
+      //to avoid timezone issues
+      userData.dateNaissance = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+    
+    const user = this.usersRepository.create(userData);
 
     return await this.usersRepository.save(user);
   }
 
   async findAll(): Promise<User[]> {
     return await this.usersRepository.find({
-      select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt'],
-      order: { createdAt: 'DESC' }
+      select: [
+        'id', 
+        'email', 
+        'firstName', 
+        'lastName', 
+        'role', 
+        'isActive', 
+        'createdAt',
+        'phone',
+        'dateNaissance',
+        'address',
+        'emergencyContact'
+      ],
+      order: { lastName: 'ASC', firstName: 'ASC' }
     });
   }
 
@@ -50,7 +81,20 @@ export class UsersService {
     try {
       const user = await this.usersRepository.findOne({
         where: { id },
-        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt']
+        select: [
+          'id', 
+          'email', 
+          'firstName', 
+          'lastName', 
+          'role', 
+          'isActive', 
+          'phone',
+          'dateNaissance',
+          'address',
+          'emergencyContact',
+          'createdAt',
+          'updatedAt'
+        ]
       });
 
       if (!user) {
@@ -77,22 +121,37 @@ export class UsersService {
   async update(id: number, updateUserDto: UpdateUserDto, currentUser?: User): Promise<User> {
     const user = await this.findOne(id);
     
-    
     if (currentUser && currentUser.role === UserRole.RECEPTIONIST) {
-      
       if (user.role !== UserRole.PATIENT) {
         throw new ForbiddenException('Vous ne pouvez modifier que les patients');
       }
       
-     
       if (updateUserDto.role && updateUserDto.role !== UserRole.PATIENT) {
         throw new ForbiddenException('Vous ne pouvez pas changer le rôle d\'un utilisateur');
       }
     }
 
-    
     if (user.email === 'admin@medflow.com' && updateUserDto.role !== UserRole.ADMIN) {
       throw new BadRequestException('Impossible de modifier le rôle de l\'administrateur principal');
+    }
+
+    // Handle date of birth update
+    if ('dateNaissance' in updateUserDto) {
+      const dateValue = updateUserDto.dateNaissance;
+      
+      if (dateValue) {
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) {
+          throw new BadRequestException('Format de date de naissance invalide');
+        }
+        // Set to start of day in local timezone to avoid timezone issues
+        user.dateNaissance = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      } else {
+        user.dateNaissance = null;
+      }
+      
+      // Remove the field from DTO 
+      delete updateUserDto.dateNaissance;
     }
 
     if (updateUserDto.email && updateUserDto.email !== user.email) {
@@ -165,7 +224,7 @@ export class UsersService {
         stack: error.stack
       });
       
-      // Re-throw the error if it's already a known exception type
+      // Re-throw the error 
       if (error instanceof BadRequestException || 
           error instanceof ForbiddenException || 
           error instanceof NotFoundException) {
@@ -178,9 +237,9 @@ export class UsersService {
 
   /**
    * Find users by role
-   * @param role The role to filter by (e.g., 'doctor', 'admin', 'receptionist')
-   * @param activeOnly Whether to return only active users (default: true)
-   * @returns Promise<User[]> List of users matching the role
+   * @param role 
+   * @param activeOnly 
+   * @returns 
    */
   async findByRole(role: string, activeOnly: boolean = true): Promise<User[]> {
     try {
@@ -235,7 +294,7 @@ export class UsersService {
 
   /**
    * Get all active doctors
-   * @returns Promise<User[]> List of active doctors
+   * @returns 
    */
   async getDoctors(): Promise<User[]> {
     try {

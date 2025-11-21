@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { XMarkIcon, CheckIcon } from '@heroicons/react/24/solid';
-import { appointmentService } from '../../services/api';
+import { XMarkIcon, CheckIcon, DocumentCheckIcon } from '@heroicons/react/24/solid';
+import { appointmentService } from '../../contexts/api';
+import Ordonnance from '../ordonnances/Ordonnance';
+
 interface Appointment {
     id: number;
     date: string;
@@ -23,6 +25,7 @@ const ListRendezVous = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [updatingId, setUpdatingId] = useState<number | null>(null);
+    const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -52,7 +55,6 @@ const ListRendezVous = () => {
             setUpdatingId(id);
             await appointmentService.updateAppointmentStatus(id, status);
             
-            // Update the local state
             setAppointments(prevAppointments => 
                 prevAppointments.map(appt => 
                     appt.id === id ? { ...appt, status } : appt
@@ -64,6 +66,14 @@ const ListRendezVous = () => {
         } finally {
             setUpdatingId(null);
         }
+    };
+
+    const handleViewOrdonnance = (appointmentId: number) => {
+        setSelectedAppointmentId(appointmentId);
+    };
+
+    const handleCloseOrdonnance = () => {
+        setSelectedAppointmentId(null);
     };
 
     const handleCancel = (id: number) => {
@@ -194,6 +204,15 @@ const ListRendezVous = () => {
                                                     <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
                                                 </div>
                                             )}
+                                            {appointment.status === 'Terminé' && (
+                                                <button
+                                                    className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                                                    title="Voir l'ordonnance"
+                                                    onClick={() => handleViewOrdonnance(appointment.id)}
+                                                >
+                                                    <DocumentCheckIcon className="h-5 w-5" />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -201,6 +220,14 @@ const ListRendezVous = () => {
                         </tbody>
                     </table>
                 </div>
+            )}
+            
+            {/* Ordonnance Modal */}
+            {selectedAppointmentId && (
+                <Ordonnance 
+                    appointmentId={selectedAppointmentId}
+                    onClose={handleCloseOrdonnance}
+                />
             )}
         </div>
     );

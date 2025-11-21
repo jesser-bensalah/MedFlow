@@ -9,10 +9,13 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<UserRole[]>(
-      'roles',
-      context.getHandler(),
-    );
+    //get roles from @Roles decorator
+    const roles = this.reflector.get<UserRole[]>('roles', context.getHandler());
+    //get roles from @SetMetadata
+    const metadataRoles = this.reflector.get<UserRole[]>('roles', context.getHandler());
+    
+    // Combine both sources of roles
+    const requiredRoles = roles || metadataRoles;
     
     // If no roles are required, allow access
     if (!requiredRoles || requiredRoles.length === 0) {
@@ -22,7 +25,6 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     
-    // Log the incoming request and user for debugging
     this.logger.debug(`Checking roles for user: ${JSON.stringify({
       userId: user?.id,
       userRole: user?.role,

@@ -1,15 +1,12 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateOrdonnanceDto } from './create-ordonnance.dto';
-import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
+import { CreateOrdonnanceDto, IsValidDate } from './create-ordonnance.dto';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateOrdonnanceDto extends PartialType(CreateOrdonnanceDto) {
-  @IsOptional()
-  @IsString()
-  contenu?: string;
 
   @IsOptional()
-  @IsDateString()
-  date?: Date;
+  @IsValidDate({ message: 'date must be a valid date string' })
+  date?: string | Date;
 
   @IsOptional()
   @IsNumber()
@@ -22,4 +19,16 @@ export class UpdateOrdonnanceDto extends PartialType(CreateOrdonnanceDto) {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  nomClinique?: string;
+
+  @IsOptional()
+  @IsValidDate({ message: 'dateExpiration must be a valid date string' })
+  dateExpiration?: string | Date;
+
+  @IsOptional()
+  @IsString()
+  medicaments?: string;
 }

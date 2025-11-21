@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, InternalServerErrorException, UnauthorizedException, Put, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, InternalServerErrorException, UnauthorizedException, Put, BadRequestException, SetMetadata } from '@nestjs/common';
 import type { Request } from 'express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -44,8 +44,13 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
-  findOne(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR, UserRole.PATIENT])
+  async findOne(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    // If the user is a patient, they can only access their own information
+    if (req.user.role === UserRole.PATIENT && req.user.id !== +id) {
+      throw new UnauthorizedException('You can only access your own information');
+    }
     return this.usersService.findOne(+id);
   }
 
@@ -67,15 +72,13 @@ export class UsersController {
     return this.usersService.toggleUserStatus(+id, req.user);
   }
 
-  // Public endpoint to get doctors (no authentication required)
+  // Public endpoint to get doctors
   @Get('public/doctors')
   async getPublicDoctors() {
     const requestId = Math.random().toString(36).substr(2, 9);
     
     try {
       console.log(`[${requestId}] [PUBLIC] Fetching doctors list...`);
-      
-      // Get active doctors only
       const doctors = await this.usersService.findByRole('doctor', true);
       
       if (!Array.isArray(doctors)) {
@@ -88,7 +91,7 @@ export class UsersController {
       
       console.log(`[${requestId}] [PUBLIC] Successfully fetched ${doctors.length} doctors`);
       
-      // Return only the necessary doctor information
+      
       return {
         success: true,
         data: doctors.map(doctor => ({
@@ -117,7 +120,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
   async getDoctors() {
-    // Just call the public endpoint internally
+    // call the public endpoint internally
     return this.getPublicDoctors();
   }
 }

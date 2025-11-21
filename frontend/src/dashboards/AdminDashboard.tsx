@@ -1,6 +1,43 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { clinicService, userService } from '../contexts/api';
 
 const AdminDashboard: React.FC = () => {
+  const [clinicCount, setClinicCount] = useState<number>(0);
+  const [doctorCount, setDoctorCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingDoctors, setIsLoadingDoctors] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [doctorError, setDoctorError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchClinicCount = async () => {
+      try {
+        const clinics = await clinicService.getAllClinics();
+        setClinicCount(clinics.length);
+      } catch (err) {
+        console.error('Failed to fetch clinics:', err);
+        setError('Impossible de charger le nombre de cliniques');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchDoctorCount = async () => {
+      try {
+        const doctors = await userService.getDoctors();
+        setDoctorCount(doctors.length);
+      } catch (err) {
+        console.error('Failed to fetch doctors:', err);
+        setDoctorError('Impossible de charger le nombre de médecins');
+      } finally {
+        setIsLoadingDoctors(false);
+      }
+    };
+
+    fetchClinicCount();
+    fetchDoctorCount();
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
@@ -11,7 +48,13 @@ const AdminDashboard: React.FC = () => {
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg font-medium text-gray-900">Cliniques</h3>
-              <div className="mt-2 text-3xl font-bold text-gray-900">15</div>
+              {isLoading ? (
+                <div className="mt-2 h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
+              ) : error ? (
+                <div className="text-red-500 text-sm mt-1">{error}</div>
+              ) : (
+                <div className="mt-2 text-3xl font-bold text-gray-900">{clinicCount}</div>
+              )}
             </div>
           </div>
 
@@ -19,7 +62,13 @@ const AdminDashboard: React.FC = () => {
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg font-medium text-gray-900">Médecins</h3>
-              <div className="mt-2 text-3xl font-bold text-gray-900">45</div>
+              {isLoadingDoctors ? (
+                <div className="mt-2 h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
+              ) : doctorError ? (
+                <div className="text-red-500 text-sm mt-1">{doctorError}</div>
+              ) : (
+                <div className="mt-2 text-3xl font-bold text-gray-900">{doctorCount}</div>
+              )}
             </div>
           </div>
 
@@ -27,7 +76,7 @@ const AdminDashboard: React.FC = () => {
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg font-medium text-gray-900">Revenus Totaux</h3>
-              <div className="mt-2 text-3xl font-bold text-gray-900">150,000 €</div>
+              <div className="mt-2 text-3xl font-bold text-gray-900">150,000 TND</div>
             </div>
           </div>
 
@@ -53,7 +102,7 @@ const AdminDashboard: React.FC = () => {
                     className="bg-blue-500 w-12 rounded-t"
                     style={{ height: `${value / 50}px` }}
                   ></div>
-                  <span className="text-xs mt-2">{value}€</span>
+                  <span className="text-xs mt-2">{value}TND</span>
                 </div>
               ))}
             </div>

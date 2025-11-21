@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "\"# Projet MedFlow\"",
   "main": "index.js",
- "scripts": {
+  "scripts": {
     "dev": "concurrently -k \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm install && npm run dev",
     "dev:backend": "cd backend && npm start",

@@ -25,6 +25,7 @@ interface CreatePatientData {
   dateOfBirth: string;
   address: string;
   emergencyContact: string;
+  cin?: string;
 }
 
 interface UpdatePatientData {
@@ -59,7 +60,8 @@ const PatientManagement: React.FC = () => {
     role: 'patient',
     dateOfBirth: '',
     address: '',
-    emergencyContact: ''
+    emergencyContact: '',
+    cin: ''
   });
   
   const [editFormData, setEditFormData] = useState<UpdatePatientData>({});
@@ -75,9 +77,10 @@ const PatientManagement: React.FC = () => {
       setError('');
       
       const token = localStorage.getItem('access_token');
-      const response = await axios.get('http://localhost:3001/patients', {
+      const response = await axios.get('http://localhost:3001/users/role/patient', {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       
@@ -99,6 +102,15 @@ const PatientManagement: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       
+      // Transform the data to match the user creation DTO
+      const { dateOfBirth, ...formDataWithoutDob } = formData;
+      const userData = {
+        ...formDataWithoutDob,
+        role: 'patient', 
+        dateNaissance: dateOfBirth, 
+        cin: formData.cin || null, 
+      };
+      
       const patientData = {
         email: formData.email,
         password: formData.password,
@@ -108,25 +120,20 @@ const PatientManagement: React.FC = () => {
         role: 'patient',
         dateOfBirth: formData.dateOfBirth,
         address: formData.address,
-        emergencyContact: formData.emergencyContact
+        emergencyContact: formData.emergencyContact,
+        cin: formData.cin
       };
 
       console.log('Sending patient data:', patientData);
       
-      const response = await axios({
-        method: 'post',
-        url: 'http://localhost:3001/patients',
-        data: patientData,
+      const response = await axios.post('http://localhost:3001/users', userData, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        responseType: 'json'
+          'Content-Type': 'application/json'
+        }
       });
       
       console.log('Patient created successfully:', response.data);
-      console.log('Response headers:', response.headers);
       setSuccess('Patient créé avec succès');
       setShowAddModal(false);
       resetForm();
@@ -164,7 +171,7 @@ const PatientManagement: React.FC = () => {
     }
   };
 
-  const handleEditPatient = async (e: React.FormEvent) => {
+  const handleUpdatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPatient) return;
     
@@ -174,6 +181,14 @@ const PatientManagement: React.FC = () => {
     try {
       const token = localStorage.getItem('access_token');
       
+      const updateData = {
+        ...editFormData,
+        dateNaissance: editFormData.dateOfBirth, 
+        
+      };
+      
+      delete updateData.dateOfBirth;
+      
       const patientData = {
         email: editFormData.email || selectedPatient.email,
         firstName: editFormData.firstName || selectedPatient.firstName,
@@ -181,27 +196,24 @@ const PatientManagement: React.FC = () => {
         phone: editFormData.phone || selectedPatient.phone,
         dateOfBirth: editFormData.dateOfBirth || selectedPatient.dateOfBirth,
         address: editFormData.address || selectedPatient.address,
-        emergencyContact: editFormData.emergencyContact || selectedPatient.emergencyContact
+        emergencyContact: editFormData.emergencyContact || selectedPatient.emergencyContact,
       };
 
       console.log('Updating patient:', selectedPatient.id);
       console.log('Sending data:', patientData);
       
-      const response = await axios({
-        method: 'put',
-        url: `http://localhost:3001/patients/${selectedPatient.id}`,
-        data: patientData,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        responseType: 'json'
-      });
+      const response = await axios.put(
+        `http://localhost:3001/users/${selectedPatient.id}`,
+        updateData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       
       console.log('Update response:', response.data);
-      console.log('Response headers:', response.headers);
-      
       setSuccess('Patient modifié avec succès');
       setShowEditModal(false);
       setSelectedPatient(null);
@@ -246,14 +258,13 @@ const PatientManagement: React.FC = () => {
     if (!selectedPatient) return;
     
     setFormLoading(true);
+    setError('');
     
     try {
       const token = localStorage.getItem('access_token');
-      
-   
       await axios.delete(`http://localhost:3001/users/${selectedPatient.id}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -272,13 +283,15 @@ const PatientManagement: React.FC = () => {
   const handleToggleStatus = async (patient: Patient) => {
     try {
       const token = localStorage.getItem('access_token');
-    
-      await axios.patch(`http://localhost:3001/users/${patient.id}/toggle-status`, {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
+      await axios.patch(
+        `http://localhost:3001/users/${patient.id}/toggle-status`,
+        { isActive: !patient.isActive },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
-      });
-      
+      );
       setSuccess(`Patient ${patient.isActive ? 'désactivé' : 'activé'} avec succès`);
       fetchPatients();
     } catch (error: any) {
@@ -297,7 +310,8 @@ const PatientManagement: React.FC = () => {
       role: 'patient',
       dateOfBirth: '',
       address: '',
-      emergencyContact: ''
+      emergencyContact: '',
+      cin: ''
     });
   };
 
@@ -335,7 +349,7 @@ const PatientManagement: React.FC = () => {
     setError('');
   };
 
-  // Effacer les messages après 5 secondes
+  // delete messages after 5 secondes 
   useEffect(() => {
     if (success || error) {
       const timer = setTimeout(() => {
@@ -541,8 +555,22 @@ const PatientManagement: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mb-4">
+                      <label htmlFor="cin" className="block text-sm font-medium text-gray-700">
+                        CIN *
+                      </label>
+                      <input
+                        type="text"
+                        id="cin"
+                        name="cin"
+                        value={formData.cin || ''}
+                        onChange={(e) => setFormData({ ...formData, cin: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter CIN"
+                      />
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Email *</label>
                       <input
@@ -650,7 +678,7 @@ const PatientManagement: React.FC = () => {
                   Modifier le Patient - {selectedPatient.firstName} {selectedPatient.lastName}
                 </h3>
                 
-                <form onSubmit={handleEditPatient} className="space-y-4">
+                <form onSubmit={handleUpdatePatient} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Date de naissance *</label>
                     <input

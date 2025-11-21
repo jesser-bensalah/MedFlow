@@ -1,12 +1,14 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
-interface User {
+export interface User {
   id: number;
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  role: 'admin' | 'doctor' | 'receptionist' | 'patient';
+  isActive: boolean;
+  clinicId?: number;
 }
 
 interface AuthContextType {

@@ -14,7 +14,7 @@ export class AppointmentController {
     constructor(private readonly appointmentService: AppointmentService) {}
 
     @Get()
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
     async findAll(): Promise<Appointment[]> {
         return this.appointmentService.findAll();
     }
@@ -23,6 +23,12 @@ export class AppointmentController {
     @Roles(UserRole.DOCTOR, UserRole.ADMIN)
     async findByDoctorId(@Param('doctorId') doctorId: number): Promise<Appointment[]> {
         return this.appointmentService.findByDoctorId(doctorId);
+    }
+
+    @Get('patient/:patientId')
+    @Roles(UserRole.PATIENT, UserRole.ADMIN, UserRole.RECEPTIONIST)
+    async findByPatientId(@Param('patientId') patientId: number): Promise<Appointment[]> {
+        return this.appointmentService.findByPatientId(patientId);
     }
 
     @Get(':id')
@@ -46,11 +52,26 @@ export class AppointmentController {
     }
 
     @Patch(':id/status')
-    @Roles(UserRole.DOCTOR, UserRole.ADMIN)
+    @Roles(UserRole.DOCTOR, UserRole.ADMIN, UserRole.RECEPTIONIST)
     async updateStatus(
         @Param('id') id: number,
         @Body('status') status: 'Planifié' | 'Confirmé' | 'Annulé' | 'Terminé'
     ): Promise<Appointment | null> {
         return this.appointmentService.updateStatus(id, status);
+    }
+
+    @Post(':id/request-cancellation')
+    @Roles(UserRole.PATIENT)
+    async requestCancellation(
+        @Param('id') id: number,
+        @Body('reason') reason?: string
+    ): Promise<{ success: boolean; message: string }> {
+        const result = await this.appointmentService.requestCancellation(id, reason);
+        return {
+            success: result,
+            message: result 
+                ? 'Demande d\'annulation envoyée avec succès' 
+                : 'Impossible de traiter la demande d\'annulation'
+        };
     }
 }

@@ -11,20 +11,25 @@ const SideNav: React.FC = () => {
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Gestion des Utilisateurs', path: '/users', icon: '👥' },
     { name: 'Gestion des Cliniques', path: '/clinics', icon: '🏥' },
-    { name: 'Facturation', path: '/billing', icon: '💰' },
+    { name: 'Facturation', path: '/edition-facture', icon: '💰' },
+    { name: 'Liste des Factures', path: '/factures-list', icon: '📄' },
     { name: 'Paramètres', path: '/settings', icon: '⚙️' },
+   
   ];
 
   const receptionistLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Gestion des Patients', path: '/patients', icon: '👤' },
     { name: 'Prise de Rendez-vous', path: '/specialities', icon: '📅' },
-    { name: 'Facturation', path: '/billing', icon: '💰' },
+    { name: 'Facturation', path: '/edition-facture', icon: '💰' },
+    { name: 'Liste des Factures', path: '/factures-list', icon: '📄' },
+    { name: 'Paramètres', path: '/settings', icon: '⚙️' },
+
   ];
 
   const doctorLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
-    { name: 'Consultations', path: '/consultations', icon: '🩺' },
+    { name: 'Consultations', path: '/consultation', icon: '🩺' },
     { name: 'Rendez-vous', path: '/rdv', icon: '📅' },
     { name: 'Ordonnances', path: '/prescriptions', icon: '📝' },
   ];
@@ -32,7 +37,7 @@ const SideNav: React.FC = () => {
   const patientLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Mes Consultations', path: '/historique-consultations', icon: '🩺' },
-    { name: 'Facturation', path: '/billing', icon: '💰' },
+    { name: 'Facturation', path: '/factures-list', icon: '💰' },
   ];
 
   const getLinks = () => {

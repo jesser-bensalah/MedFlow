@@ -12,9 +12,24 @@ export class OrdonnanceService {
     private ordonnanceRepository: Repository<Ordonnance>,
   ) {}
 
-  async create(createOrdonnanceDto: CreateOrdonnanceDto): Promise<Ordonnance> {
-    const ordonnance = this.ordonnanceRepository.create(createOrdonnanceDto);
-    return await this.ordonnanceRepository.save(ordonnance);
+  async create(createOrdonnanceDto: CreateOrdonnanceDto, doctorId: number): Promise<Ordonnance> {
+    console.log('Creating ordonnance with data:', JSON.stringify(createOrdonnanceDto, null, 2));
+    
+    // Create a new Ordonnance instance with the DTO data
+    const ordonnance = new Ordonnance();
+    ordonnance.date = new Date(createOrdonnanceDto.date);
+    ordonnance.dateExpiration = new Date(createOrdonnanceDto.dateExpiration);
+    ordonnance.patientId = createOrdonnanceDto.patientId;
+    ordonnance.doctorId = doctorId;
+    ordonnance.notes = createOrdonnanceDto.notes || undefined;
+    ordonnance.nomClinique = createOrdonnanceDto.nomClinique || 'Clinique par défaut';
+    
+    // The setter will handle the JSON stringification
+    ordonnance.medicaments = createOrdonnanceDto.medicaments;
+    
+    const saved = await this.ordonnanceRepository.save(ordonnance);
+    console.log('Created ordonnance:', JSON.stringify(saved, null, 2));
+    return saved;
   }
 
   async findAll(): Promise<Ordonnance[]> {
@@ -38,22 +53,39 @@ export class OrdonnanceService {
     id: number,
     updateOrdonnanceDto: UpdateOrdonnanceDto,
   ): Promise<Ordonnance> {
+    console.log('Updating ordonnance:', id, 'with data:', JSON.stringify(updateOrdonnanceDto, null, 2));
+    
     const ordonnance = await this.findOne(id);
-    Object.assign(ordonnance, updateOrdonnanceDto);
-    return await this.ordonnanceRepository.save(ordonnance);
+    
+    // Create a new object with only the fields that are defined in the DTO
+    const updates: Partial<Ordonnance> = {};
+    
+    // Copy all properties from DTO to updates object
+    Object.entries(updateOrdonnanceDto).forEach(([key, value]) => {
+      if (value !== undefined) {
+        updates[key] = value;
+      }
+    });
+    
+    // Apply updates
+    Object.assign(ordonnance, updates);
+    
+    const updated = await this.ordonnanceRepository.save(ordonnance);
+    console.log('Updated ordonnance:', JSON.stringify(updated, null, 2));
+    return updated;
   }
 
-  async remove(id: number): Promise<void> {
-    const result = await this.ordonnanceRepository.delete(id);
+  async remove(id: number, doctorId: number): Promise<void> {
+    const result = await this.ordonnanceRepository.delete({ id, doctor: { id: doctorId } });
     if (result.affected === 0) {
-      throw new NotFoundException(`Ordonnance with ID ${id} not found`);
+      throw new NotFoundException(`Ordonnance with ID ${id} not found or access denied`);
     }
   }
 
   async findByPatient(patientId: number): Promise<Ordonnance[]> {
-    return await this.ordonnanceRepository.find({
-      where: { patientId },
-      relations: ['doctor'],
+    return this.ordonnanceRepository.find({
+      where: { patient: { id: patientId } },
+      relations: ['patient', 'doctor'],
       order: { date: 'DESC' },
     });
   }

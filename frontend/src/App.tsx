@@ -1,5 +1,7 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import Layout from './components/Layout';
@@ -13,52 +15,11 @@ import DoctorSpecialtiesList from './components/specialities/DoctorSpecialtiesLi
 import ListRendezVous from './components/rendezvous/ListRendezVous';
 import HistoriqueConsultations from './components/patients/HistoriqueConsultations';
 import ClinicPage from './components/clinics/ClinicPage';
+import Consultation from './components/Consultations/Consultation';
+import EditionFacture from './components/facturations/EditionFacture';
+import FacturesList from './components/facturations/FacturesList';
+import { StripePayment } from './components/payments/StripePayment';
 
-
-const BillingManagement: React.FC = () => (
-  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Facturation</h1>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
-      </div>
-    </div>
-  </div>
-);
-
-const SettingsManagement: React.FC = () => (
-  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Paramètres</h1>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
-      </div>
-    </div>
-  </div>
-);
-
-
-const ConsultationsManagement: React.FC = () => (
-  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Consultations</h1>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
-      </div>
-    </div>
-  </div>
-);
-
-const PrescriptionsManagement: React.FC = () => (
-  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Ordonnances</h1>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-        <p className="text-yellow-700">Cette fonctionnalité sera disponible prochainement.</p>
-      </div>
-    </div>
-  </div>
-);
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ 
   children, 
@@ -147,17 +108,6 @@ const AppRoutes: React.FC = () => {
         } 
       />
       
-  
-      
-      <Route 
-        path="/settings" 
-        element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <SettingsManagement />
-          </ProtectedRoute>
-        } 
-      />
-      
       {/* Routes Réceptionniste */}
       <Route 
         path="/patients" 
@@ -170,26 +120,6 @@ const AppRoutes: React.FC = () => {
       
       {/* Routes Médecin */}
       <Route 
-        path="/consultations" 
-        element={
-          <ProtectedRoute allowedRoles={['admin', 'doctor']}>
-            <ConsultationsManagement />
-          </ProtectedRoute>
-        } 
-      />
-      
-      <Route 
-        path="/prescriptions" 
-        element={
-          <ProtectedRoute allowedRoles={['admin', 'doctor']}>
-            <PrescriptionsManagement />
-          </ProtectedRoute>
-        } 
-      />
-      
-    
-      
-      <Route 
         path="/specialities" 
         element={
           <ProtectedRoute allowedRoles={['admin', 'doctor', 'receptionist']}>
@@ -200,15 +130,6 @@ const AppRoutes: React.FC = () => {
       
       
       {/* Routes communes */}
-      <Route 
-        path="/billing" 
-        element={
-          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'patient']}>
-            <BillingManagement />
-          </ProtectedRoute>
-        } 
-      />
-      
       <Route 
         path="/" 
         element={
@@ -239,12 +160,48 @@ const AppRoutes: React.FC = () => {
       <Route 
         path="/clinics" 
         element={
-          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor']}> 
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor', 'patient']}> 
             <ClinicPage />
           </ProtectedRoute>
         } 
       />
+
+      <Route 
+        path="/consultation" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'patient', 'doctor', 'receptionist']}>
+            <Consultation />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/edition-facture" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'patient']}> 
+            <EditionFacture />
+          </ProtectedRoute>
+        } 
+      />
       
+      <Route 
+        path="/factures-list" 
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'patient']}> 
+            <FacturesList />
+          </ProtectedRoute>
+        } 
+      />  
+
+     <Route 
+        path="/payment" 
+        element={
+          <ProtectedRoute>
+            <PaymentWrapper />
+          </ProtectedRoute>
+        } 
+      />
+
       {/* Route fallback pour les URLs inconnues */}
       <Route 
         path="*" 
@@ -270,8 +227,52 @@ const App: React.FC = () => {
     <Router>
       <AuthProvider>
         <AppRoutes />
+        <ToastContainer 
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </AuthProvider>
     </Router>
+  );
+};
+
+// Wrapper component to handle URL parameters for payment
+const PaymentWrapper = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const amount = parseFloat(searchParams.get('amount') || '0');
+  const invoiceId = searchParams.get('invoiceId') || '';
+
+  const handlePaymentSuccess = (paymentIntent: any) => {
+    //update the invoice status in your backend
+    console.log('Payment successful:', { paymentIntent, invoiceId });
+    // Redirect to a success page or back to invoices
+    navigate('/factures', { state: { payment: 'success' } });
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('Payment error:', error);
+    //show toast error
+    navigate('/factures', { state: { payment: 'error', error } });
+  };
+
+  if (!amount || amount <= 0) {
+    return <Navigate to="/factures" />;
+  }
+
+  return (
+    <StripePayment 
+      amount={amount} 
+      onSuccess={handlePaymentSuccess} 
+      onError={handlePaymentError} 
+    />
   );
 };
 

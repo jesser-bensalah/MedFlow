@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne } from 'typeorm';
-import { IsEmail, IsOptional, IsString, MinLength, IsEnum, IsDate } from 'class-validator';
+import { IsOptional } from 'class-validator';
 import { Appointment } from './appointment.entity';
 import { UserRole } from '../enums/user-role.enum';
 import { Ordonnance } from './ordonnance.entity';
@@ -17,8 +17,8 @@ export class User {
   @IsOptional()
   cin: string | null;
 
-  @Column({ nullable: true })
-  dateNaissance: Date;
+  @Column({ type: 'date', nullable: true })
+  dateNaissance: Date | null;
 
   @Column({ unique: true })
   email: string;
@@ -41,14 +41,14 @@ export class User {
   @Column({ nullable: true, name: 'emergency_contact' })
   emergencyContact: string;
 
+  @Column({ nullable: true })
+  clinicId: number;
+
   @OneToMany(() => Appointment, appointment => appointment.patient)
   appointments: Appointment[];
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.PATIENT })
   role: UserRole;
-
-  @Column({ nullable: true })
-  clinicId: number;
 
   @Column({ default: true })
   isActive: boolean;

@@ -3,11 +3,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { PatientsModule } from './patients/patients.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { ClinicModule } from './clinic/clinic.module';
 import { OrdonnanceModule } from './ordonnance/ordonnance.module';
 import { FactureModule } from './facture/facture.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -31,11 +31,11 @@ import { FactureModule } from './facture/facture.module';
     }),
     AuthModule,
     UsersModule,
-    PatientsModule,
     AppointmentModule,
     ClinicModule,
     OrdonnanceModule,
     FactureModule,
+    PaymentModule,
   ],
 })
 export class AppModule { }

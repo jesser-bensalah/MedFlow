@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { appointmentService } from '../../services/api';
+import { appointmentService } from '../../contexts/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faUserDoctor, 
@@ -15,7 +15,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Select from 'react-select';
 import { Link } from 'react-router-dom';
-import { userService } from '../../services/api';
+import { userService } from '../../contexts/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -46,11 +46,67 @@ const DoctorSpecialtiesList: React.FC = () => {
     const [appointmentDate, setAppointmentDate] = useState<Date>(new Date());
     const [appointmentTime, setAppointmentTime] = useState('09:00');
     
-    // Define time slots for appointments
-    const timeSlots = [
-        '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-        '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'
-    ];
+    // Function to check if a time slot is in the past
+    const isTimeInPast = (date: Date, time: string): boolean => {
+        const now = new Date();
+        const [hours, minutes] = time.split(':').map(Number);
+        const slotDate = new Date(date);
+        slotDate.setHours(hours, minutes, 0, 0);
+        
+        // Add a 5-minute buffer to account for the time it takes to book
+        const buffer = 5 * 60 * 1000; // 5 minutes in milliseconds
+        return slotDate.getTime() < (now.getTime() - buffer);
+    };
+
+    // Function to generate time slots based on the selected date
+    const generateTimeSlots = (selectedDate: Date) => {
+        const now = new Date();
+        const isToday = selectedDate.toDateString() === now.toDateString();
+        
+        // All possible time slots
+        const allTimeSlots = [
+            '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+            '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'
+        ];
+
+        // If it's today, filter out past times
+        if (isToday) {
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            
+            return allTimeSlots.filter(time => {
+                const [hours, minutes] = time.split(':').map(Number);
+                return hours > currentHour || (hours === currentHour && minutes + 5 > currentMinute);
+            });
+        }
+        
+        return allTimeSlots;
+    };
+
+    // State for available time slots
+    const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
+
+    // Update available time slots when date changes
+    useEffect(() => {
+        const slots = generateTimeSlots(appointmentDate);
+        setAvailableTimeSlots(slots);
+        
+        // If the selected time is not in the available slots or is in the past, reset to the first available slot
+        if (slots.length > 0 && (!slots.includes(appointmentTime) || isTimeInPast(appointmentDate, appointmentTime))) {
+            setAppointmentTime(slots[0]);
+        }
+    }, [appointmentDate]);
+
+    // Initialize time slots when modal opens
+    useEffect(() => {
+        if (showAppointmentModal) {
+            const slots = generateTimeSlots(new Date());
+            setAvailableTimeSlots(slots);
+            if (slots.length > 0) {
+                setAppointmentTime(slots[0]);
+            }
+        }
+    }, [showAppointmentModal]);
     const [isLoadingPatients, setIsLoadingPatients] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -84,7 +140,7 @@ const DoctorSpecialtiesList: React.FC = () => {
                     specialite: doctor.specialite || 'Not specified',
                     email: doctor.email || 'No email provided',
                     phone: doctor.phone || 'No phone provided',
-                    isActive: doctor.isActive !== false // Default to true if not specified
+                    isActive: doctor.isActive !== false 
                 }));
                 
                 setDoctors(formattedDoctors);
@@ -145,42 +201,110 @@ const DoctorSpecialtiesList: React.FC = () => {
     }, []);
 
     const handleBookAppointment = async () => {
-    if (!selectedPatient?.value || !appointmentDate || !selectedDoctor) {
-        toast.error('Veuillez sélectionner un patient, un médecin et une date');
-        return;
-    }
-
-    try {
-        const formattedDate = appointmentDate.toISOString().split('T')[0];
+        // Validate inputs 
+        if (!selectedPatient?.value) {
+            toast.error('Veuillez sélectionner un patient', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+            return;
+        }
         
-        console.log('Sending appointment data:', {
-            doctorId: selectedDoctor.id,
-            patientId: selectedPatient.value,
-            appointmentDate: formattedDate,
-            appointmentTime: appointmentTime,
-            status: 'Planifié',
-            specialite: selectedDoctor.specialite || 'Généraliste'
-        });
+        if (!selectedDoctor) {
+            toast.error('Veuillez sélectionner un médecin', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+            return;
+        }
+        
+        if (!appointmentDate) {
+            toast.error('Veuillez sélectionner une date', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+            return;
+        }
+        
+        // Check if selected time is in the past
+        if (isTimeInPast(appointmentDate, appointmentTime)) {
+            toast.error('Impossible de prendre rendez-vous à une heure passée. Veuillez choisir un horaire futur.', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+            
+            // Reset to the first available time slot
+            const slots = generateTimeSlots(appointmentDate);
+            if (slots.length > 0) {
+                setAppointmentTime(slots[0]);
+            }
+            return;
+        }
 
-        await appointmentService.createAppointment({
-            doctorId: selectedDoctor.id,
-            patientId: selectedPatient.value,
-            appointmentDate: formattedDate,
-            appointmentTime: appointmentTime,
-            status: 'Planifié',
-            specialite: selectedDoctor.specialite || 'Généraliste'
-        });
+        try {
+            const formattedDate = appointmentDate.toISOString().split('T')[0];
+            
+            console.log('Sending appointment data:', {
+                doctorId: selectedDoctor.id,
+                patientId: selectedPatient.value,
+                appointmentDate: formattedDate,
+                appointmentTime: appointmentTime,
+                status: 'Planifié',
+                specialite: selectedDoctor.specialite || 'Généraliste'
+            });
 
-        toast.success('Rendez-vous programmé avec succès!');
-        setShowAppointmentModal(false);
-        setSelectedPatient(null);
-        setAppointmentDate(new Date());
-        setAppointmentTime('09:00');
-    } catch (error) {
-        console.error('Error booking appointment:', error);
-        toast.error('Une erreur est survenue lors de la prise de rendez-vous');
-    }
-};
+            await appointmentService.createAppointment({
+                doctorId: selectedDoctor.id,
+                patientId: selectedPatient.value,
+                appointmentDate: formattedDate,
+                appointmentTime: appointmentTime,
+                status: 'Planifié',
+                specialite: selectedDoctor.specialite || 'Généraliste'
+            });
+
+            // Show success message
+            toast.success('Rendez-vous programmé avec succès!', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+            
+            // Reset form
+            setShowAppointmentModal(false);
+            setSelectedPatient(null);
+            setAppointmentDate(new Date());
+            setAppointmentTime(availableTimeSlots[0] || '09:00');
+        } catch (error) {
+            console.error('Error booking appointment:', error);
+            toast.error('Une erreur est survenue lors de la prise de rendez-vous', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+        }
+    };
 
 
     if (loading) {
@@ -421,11 +545,49 @@ const DoctorSpecialtiesList: React.FC = () => {
                       </label>
                       <DatePicker
                         selected={appointmentDate}
-                        onChange={(date: Date | null) => date && setAppointmentDate(date)}
+                        onChange={(date: Date | null) => {
+                            if (date) {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                
+                                if (date < today) {
+                                    toast.error('Veuillez sélectionner une date future', {
+                                        position: "top-right",
+                                        autoClose: 3000,
+                                        hideProgressBar: false,
+                                        closeOnClick: true,
+                                        pauseOnHover: true,
+                                        draggable: true
+                                    });
+                                    return;
+                                }
+                                
+                                setAppointmentDate(date);
+                                // Update available time slots for the new date
+                                const slots = generateTimeSlots(date);
+                                setAvailableTimeSlots(slots);
+                                
+                                // If current time is not in the new slots, reset to first available slot
+                                if (slots.length > 0) {
+                                    if (!slots.includes(appointmentTime) || isTimeInPast(date, appointmentTime)) {
+                                        setAppointmentTime(slots[0]);
+                                    }
+                                } else {
+                                    setAppointmentTime('');
+                                }
+                            }
+                        }}
                         minDate={new Date()}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         dateFormat="dd/MM/yyyy"
                         placeholderText="Sélectionner une date"
+                        filterDate={(date) => {
+                            // Disable past dates
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return date >= today;
+                        }}
+                        showDisabledMonthNavigation
                       />
                     </div>
                     
@@ -438,11 +600,17 @@ const DoctorSpecialtiesList: React.FC = () => {
                         value={appointmentTime}
                         onChange={(e) => setAppointmentTime(e.target.value)}
                       >
-                        {timeSlots.map((time) => (
-                          <option key={time} value={time}>
-                            {time}
-                          </option>
-                        ))}
+                        {availableTimeSlots.length > 0 ? (
+                            availableTimeSlots.map((time) => (
+                                <option key={time} value={time}>
+                                    {time}
+                                </option>
+                            ))
+                        ) : (
+                            <option value="" disabled>
+                                Aucun créneau disponible pour cette date
+                            </option>
+                        )}
                       </select>
                     </div>
                     
@@ -458,7 +626,7 @@ const DoctorSpecialtiesList: React.FC = () => {
                         type="button"
                         onClick={handleBookAppointment}
                         className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={!selectedPatient?.value || !appointmentDate}
+                        disabled={!selectedPatient?.value || !appointmentDate || availableTimeSlots.length === 0}
                       >
                         Confirmer le rendez-vous
                       </button>
