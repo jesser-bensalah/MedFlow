@@ -17,12 +17,12 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   isAuthenticated: boolean;
-  checkTokenValidity: () => Promise<boolean>; 
+  checkTokenValidity: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Configuration globale d'axios avec intercepteur
+
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
- 
+
   const checkTokenValidity = async (): Promise<boolean> => {
     try {
       const token = localStorage.getItem('access_token');
@@ -72,12 +72,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const token = localStorage.getItem('access_token');
       const userData = localStorage.getItem('user');
-      
+
       console.log(' Vérification du statut auth - Token:', !!token, 'User:', !!userData);
-      
+
       if (token && userData) {
         const isValid = await checkTokenValidity();
-        
+
         if (isValid) {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);
@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       console.log(' Tentative de connexion avec:', email);
-      
+
       const response = await axios.post('http://localhost:3001/auth/login', {
         email,
         password,
@@ -112,18 +112,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Réponse du serveur reçue');
 
       const { access_token, user: userData } = response.data;
-      
+
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
-      
+
       setUser(userData);
       setIsAuthenticated(true);
-      
+
       console.log(' Connexion réussie, utilisateur:', userData);
     } catch (error: any) {
       console.error(' Erreur de connexion:', error);
       setIsAuthenticated(false);
-      
+
       let errorMessage = 'Erreur de connexion';
       if (error.response) {
         errorMessage = error.response.data?.message || `Erreur ${error.response.status}`;
@@ -132,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         errorMessage = error.message;
       }
-      
+
       throw new Error(errorMessage);
     } finally {
       setLoading(false);
@@ -148,12 +148,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const value = {
-    user, 
-    login, 
-    logout, 
+    user,
+    login,
+    logout,
     loading,
     isAuthenticated,
-    checkTokenValidity 
+    checkTokenValidity
   };
 
   console.log(' AuthContext rendu - authenticated:', value.isAuthenticated, 'loading:', value.loading);

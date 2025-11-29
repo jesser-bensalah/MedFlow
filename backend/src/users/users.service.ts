@@ -14,7 +14,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const existingUser = await this.usersRepository.findOne({
@@ -26,7 +26,7 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
-    
+
     const userData: Partial<User> = {
       email: createUserDto.email,
       password: hashedPassword,
@@ -38,17 +38,17 @@ export class UsersService {
       emergencyContact: createUserDto.emergencyContact,
       isActive: true
     };
+
     
-    // Handle date of birth if provided
     if (createUserDto.dateNaissance) {
       const date = new Date(createUserDto.dateNaissance);
       if (isNaN(date.getTime())) {
         throw new BadRequestException('Format de date de naissance invalide');
       }
-      //to avoid timezone issues
+    
       userData.dateNaissance = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     }
-    
+
     const user = this.usersRepository.create(userData);
 
     return await this.usersRepository.save(user);
@@ -57,12 +57,12 @@ export class UsersService {
   async findAll(): Promise<User[]> {
     return await this.usersRepository.find({
       select: [
-        'id', 
-        'email', 
-        'firstName', 
-        'lastName', 
-        'role', 
-        'isActive', 
+        'id',
+        'email',
+        'firstName',
+        'lastName',
+        'role',
+        'isActive',
         'createdAt',
         'phone',
         'dateNaissance',
@@ -82,12 +82,12 @@ export class UsersService {
       const user = await this.usersRepository.findOne({
         where: { id },
         select: [
-          'id', 
-          'email', 
-          'firstName', 
-          'lastName', 
-          'role', 
-          'isActive', 
+          'id',
+          'email',
+          'firstName',
+          'lastName',
+          'role',
+          'isActive',
           'phone',
           'dateNaissance',
           'address',
@@ -109,23 +109,23 @@ export class UsersService {
         idType: typeof id,
         stack: error.stack
       });
-      
+
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-      
+
       throw new Error('Une erreur est survenue lors de la récupération de l\'utilisateur');
     }
   }
 
   async update(id: number, updateUserDto: UpdateUserDto, currentUser?: User): Promise<User> {
     const user = await this.findOne(id);
-    
+
     if (currentUser && currentUser.role === UserRole.RECEPTIONIST) {
       if (user.role !== UserRole.PATIENT) {
         throw new ForbiddenException('Vous ne pouvez modifier que les patients');
       }
-      
+
       if (updateUserDto.role && updateUserDto.role !== UserRole.PATIENT) {
         throw new ForbiddenException('Vous ne pouvez pas changer le rôle d\'un utilisateur');
       }
@@ -135,22 +135,22 @@ export class UsersService {
       throw new BadRequestException('Impossible de modifier le rôle de l\'administrateur principal');
     }
 
-    // Handle date of birth update
+   
     if ('dateNaissance' in updateUserDto) {
       const dateValue = updateUserDto.dateNaissance;
-      
+
       if (dateValue) {
         const date = new Date(dateValue);
         if (isNaN(date.getTime())) {
           throw new BadRequestException('Format de date de naissance invalide');
         }
-        // Set to start of day in local timezone to avoid timezone issues
+        
         user.dateNaissance = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       } else {
         user.dateNaissance = null;
       }
-      
-      // Remove the field from DTO 
+
+     
       delete updateUserDto.dateNaissance;
     }
 
@@ -173,8 +173,8 @@ export class UsersService {
 
   async remove(id: number): Promise<{ message: string }> {
     const user = await this.findOne(id);
-    
-   
+
+
     if (user.email === 'admin@medflow.com') {
       throw new BadRequestException('Impossible de supprimer l\'administrateur principal');
     }
@@ -185,52 +185,52 @@ export class UsersService {
 
   async toggleUserStatus(id: number, currentUser?: User): Promise<User> {
     try {
-      // Validate ID first
+      
       if (isNaN(id) || id <= 0) {
         throw new BadRequestException('ID utilisateur invalide');
       }
 
       const user = await this.findOne(id);
+
       
-      // Check permissions
       if (currentUser && currentUser.role === UserRole.RECEPTIONIST) {
         if (user.role !== UserRole.PATIENT) {
           throw new ForbiddenException('Vous ne pouvez modifier que le statut des patients');
         }
       }
 
-      // Prevent disabling the main admin
+      
       if (user.email === 'admin@medflow.com') {
         throw new BadRequestException('Impossible de désactiver l\'administrateur principal');
       }
 
-      // Toggle the active status
+      
       user.isActive = !user.isActive;
-      
-      // Save the updated user
+
+     
       const updatedUser = await this.usersRepository.save(user);
-      
+
       console.log(`User ${user.id} status toggled to ${user.isActive ? 'active' : 'inactive'}`);
-      
+
       return updatedUser;
     } catch (error) {
       console.error('Error in toggleUserStatus:', {
         error: error.message,
         userId: id,
-        currentUser: currentUser ? { 
-          id: currentUser.id, 
-          role: currentUser.role 
+        currentUser: currentUser ? {
+          id: currentUser.id,
+          role: currentUser.role
         } : 'No current user',
         stack: error.stack
       });
-      
-      // Re-throw the error 
-      if (error instanceof BadRequestException || 
-          error instanceof ForbiddenException || 
-          error instanceof NotFoundException) {
+
+ 
+      if (error instanceof BadRequestException ||
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException) {
         throw error;
       }
-      
+
       throw new Error('Une erreur est survenue lors de la modification du statut de l\'utilisateur');
     }
   }
@@ -245,7 +245,7 @@ export class UsersService {
     try {
       this.logger.debug(`Finding users with role: ${role}${activeOnly ? ' (active only)' : ''}`);
 
-      // Validate role parameter
+     
       if (!role || typeof role !== 'string' || role.trim() === '') {
         this.logger.warn('Invalid role parameter provided to findByRole');
         return [];
@@ -276,7 +276,7 @@ export class UsersService {
           firstName: 'ASC'
         }
       });
-      
+
       this.logger.debug(`Found ${users.length} users with role: ${role}`);
       return users || [];
     } catch (error) {
@@ -286,8 +286,8 @@ export class UsersService {
         ...(error.code && { code: error.code }),
         ...(error.sqlMessage && { sqlMessage: error.sqlMessage })
       });
-      
-      // Return empty array instead of throwing error to prevent breaking the UI
+
+    
       return [];
     }
   }
@@ -309,5 +309,21 @@ export class UsersService {
       return [];
     }
   }
+
+  async updatePassword(userId: number, newPassword: string): Promise<{ message: string }> {
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException('Le mot de passe doit contenir au moins 6 caractères');
+    }
+
+    const user = await this.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await this.usersRepository.update(userId, { password: hashedPassword });
+
+    return { message: 'Mot de passe mis à jour avec succès' };
+  }
 }
-    
+

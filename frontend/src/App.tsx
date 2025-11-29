@@ -19,14 +19,14 @@ import Consultation from './components/Consultations/Consultation';
 import EditionFacture from './components/facturations/EditionFacture';
 import FacturesList from './components/facturations/FacturesList';
 import { StripePayment } from './components/payments/StripePayment';
+import SettingsPage from './pages/SettingsPage';
 
-
-const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ 
-  children, 
-  allowedRoles = [] 
+const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
+  children,
+  allowedRoles = []
 }) => {
   const { user, isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -37,15 +37,15 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: strin
       </div>
     );
   }
-  
+
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
-  
+
   return <Layout>{children}</Layout>;
 };
 
@@ -65,7 +65,7 @@ const AppRoutes: React.FC = () => {
 
   const getDashboard = () => {
     if (!user) return <Navigate to="/login" replace />;
-    
+
     switch (user.role) {
       case 'admin':
         return <AdminDashboard />;
@@ -82,129 +82,138 @@ const AppRoutes: React.FC = () => {
 
   return (
     <Routes>
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-        } 
+        }
       />
-      
-      <Route 
-        path="/dashboard" 
+
+      <Route
+        path="/dashboard"
         element={
           <ProtectedRoute>
             {getDashboard()}
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* Routes Admin */}
-      <Route 
-        path="/users" 
+      <Route
+        path="/users"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <UserManagement />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* Routes Réceptionniste */}
-      <Route 
-        path="/patients" 
+      <Route
+        path="/patients"
         element={
           <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
             <PatientManagement />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* Routes Médecin */}
-      <Route 
-        path="/specialities" 
+      <Route
+        path="/specialities"
         element={
           <ProtectedRoute allowedRoles={['admin', 'doctor', 'receptionist']}>
             <DoctorSpecialtiesList />
           </ProtectedRoute>
-        } 
-      />
-      
-      
-      {/* Routes communes */}
-      <Route 
-        path="/" 
-        element={
-          isAuthenticated ? 
-            <Navigate to="/dashboard" replace /> : 
-            <Navigate to="/login" replace />
-        } 
+        }
       />
 
-      <Route 
-        path="/rdv" 
+
+      {/* Routes communes */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated ?
+            <Navigate to="/dashboard" replace /> :
+            <Navigate to="/login" replace />
+        }
+      />
+
+      <Route
+        path="/rdv"
         element={
           <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor']}>
             <ListRendezVous />
           </ProtectedRoute>
-        } 
+        }
       />
 
-      <Route 
-        path="/historique-consultations" 
+      <Route
+        path="/historique-consultations"
         element={
           <ProtectedRoute allowedRoles={['admin', 'patient', 'doctor', 'receptionist']}>
             <HistoriqueConsultations />
           </ProtectedRoute>
-        } 
+        }
       />
 
-      <Route 
-        path="/clinics" 
+      <Route
+        path="/clinics"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor', 'patient']}> 
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'doctor', 'patient']}>
             <ClinicPage />
           </ProtectedRoute>
-        } 
+        }
       />
 
-      <Route 
-        path="/consultation" 
+      <Route
+        path="/consultation"
         element={
           <ProtectedRoute allowedRoles={['admin', 'patient', 'doctor', 'receptionist']}>
             <Consultation />
           </ProtectedRoute>
-        } 
+        }
       />
 
-      <Route 
-        path="/edition-facture" 
+      <Route
+        path="/edition-facture"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'patient']}> 
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'patient']}>
             <EditionFacture />
           </ProtectedRoute>
-        } 
+        }
       />
-      
-      <Route 
-        path="/factures-list" 
+
+      <Route
+        path="/factures-list"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'patient']}> 
+          <ProtectedRoute allowedRoles={['admin', 'receptionist', 'patient']}>
             <FacturesList />
           </ProtectedRoute>
-        } 
-      />  
+        }
+      />
 
-     <Route 
-        path="/payment" 
+      <Route
+        path="/payment"
         element={
           <ProtectedRoute>
             <PaymentWrapper />
           </ProtectedRoute>
-        } 
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
       />
 
       {/* Route fallback pour les URLs inconnues */}
-      <Route 
-        path="*" 
+      <Route
+        path="*"
         element={
           <ProtectedRoute>
             <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -216,7 +225,7 @@ const AppRoutes: React.FC = () => {
               </div>
             </div>
           </ProtectedRoute>
-        } 
+        }
       />
     </Routes>
   );
@@ -227,7 +236,7 @@ const App: React.FC = () => {
     <Router>
       <AuthProvider>
         <AppRoutes />
-        <ToastContainer 
+        <ToastContainer
           position="top-right"
           autoClose={5000}
           hideProgressBar={false}
@@ -243,7 +252,7 @@ const App: React.FC = () => {
   );
 };
 
-// Wrapper component to handle URL parameters for payment
+
 const PaymentWrapper = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -251,7 +260,7 @@ const PaymentWrapper = () => {
   const invoiceId = searchParams.get('invoiceId') || '';
 
   const handlePaymentSuccess = (paymentIntent: any) => {
-    //update the invoice status in your backend
+ 
     console.log('Payment successful:', { paymentIntent, invoiceId });
     // Redirect to a success page or back to invoices
     navigate('/factures', { state: { payment: 'success' } });
@@ -259,7 +268,7 @@ const PaymentWrapper = () => {
 
   const handlePaymentError = (error: string) => {
     console.error('Payment error:', error);
-    //show toast error
+    
     navigate('/factures', { state: { payment: 'error', error } });
   };
 
@@ -268,10 +277,10 @@ const PaymentWrapper = () => {
   }
 
   return (
-    <StripePayment 
-      amount={amount} 
-      onSuccess={handlePaymentSuccess} 
-      onError={handlePaymentError} 
+    <StripePayment
+      amount={amount}
+      onSuccess={handlePaymentSuccess}
+      onError={handlePaymentError}
     />
   );
 };

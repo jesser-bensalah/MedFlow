@@ -1,7 +1,7 @@
 import { api } from '../contexts/api';
 
 export const ordonnanceService = {
-  // Get all prescriptions for the current patient
+ 
   getPatientPrescriptions: async (patientId: number) => {
     try {
       const response = await api.get(`/ordonnances/patient/${patientId}`);
@@ -12,7 +12,7 @@ export const ordonnanceService = {
     }
   },
 
-  // Get a single prescription by ID
+
   getPrescriptionById: async (id: number) => {
     try {
       const response = await api.get(`/ordonnances/${id}`);
@@ -23,7 +23,7 @@ export const ordonnanceService = {
     }
   },
 
-  // Generate PDF for a prescription
+  
   generatePdf: async (id: number) => {
     try {
       const response = await api.get(`/ordonnances/${id}/pdf`, {

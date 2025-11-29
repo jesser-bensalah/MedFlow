@@ -15,7 +15,7 @@ interface AuthenticatedRequest extends Request {
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
@@ -32,14 +32,14 @@ export class UsersController {
   @Get('role/:role')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
   async findByRole(@Param('role') role: string) {
-    // Convert role to lowercase to match enum values
-    const normalizedRole = role.toLowerCase();
     
-    // Validate if the role exists in the UserRole enum
+    const normalizedRole = role.toLowerCase();
+
+   
     if (!Object.values(UserRole).includes(normalizedRole as UserRole)) {
       throw new BadRequestException(`Invalid role: ${role}`);
     }
-    
+
     return this.usersService.findByRole(normalizedRole);
   }
 
@@ -47,7 +47,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR, UserRole.PATIENT])
   async findOne(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
-    // If the user is a patient, they can only access their own information
+   
     if (req.user.role === UserRole.PATIENT && req.user.id !== +id) {
       throw new UnauthorizedException('You can only access your own information');
     }
@@ -72,15 +72,15 @@ export class UsersController {
     return this.usersService.toggleUserStatus(+id, req.user);
   }
 
-  // Public endpoint to get doctors
+  
   @Get('public/doctors')
   async getPublicDoctors() {
     const requestId = Math.random().toString(36).substr(2, 9);
-    
+
     try {
       console.log(`[${requestId}] [PUBLIC] Fetching doctors list...`);
       const doctors = await this.usersService.findByRole('doctor', true);
-      
+
       if (!Array.isArray(doctors)) {
         console.error(`[${requestId}] [PUBLIC] Expected array but got:`, typeof doctors);
         return {
@@ -88,10 +88,10 @@ export class UsersController {
           data: []
         };
       }
-      
+
       console.log(`[${requestId}] [PUBLIC] Successfully fetched ${doctors.length} doctors`);
-      
-      
+
+
       return {
         success: true,
         data: doctors.map(doctor => ({
@@ -115,12 +115,32 @@ export class UsersController {
       };
     }
   }
-  
+
   @Get('doctors')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
   async getDoctors() {
-    // call the public endpoint internally
+    
     return this.getPublicDoctors();
+  }
+
+  @Put(':id/password')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR, UserRole.PATIENT)
+  async updatePassword(
+    @Param('id') id: string,
+    @Body('newPassword') newPassword: string,
+    @Req() req: AuthenticatedRequest
+  ) {
+    
+    if (req.user.role === UserRole.PATIENT && req.user.id !== +id) {
+      throw new UnauthorizedException('Vous ne pouvez modifier que votre propre mot de passe');
+    }
+
+    if (!newPassword) {
+      throw new BadRequestException('Le nouveau mot de passe est requis');
+    }
+
+    return this.usersService.updatePassword(+id, newPassword);
   }
 }

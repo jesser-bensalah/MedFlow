@@ -14,7 +14,7 @@ const SideNav: React.FC = () => {
     { name: 'Facturation', path: '/edition-facture', icon: '💰' },
     { name: 'Liste des Factures', path: '/factures-list', icon: '📄' },
     { name: 'Paramètres', path: '/settings', icon: '⚙️' },
-   
+
   ];
 
   const receptionistLinks = [
@@ -24,7 +24,6 @@ const SideNav: React.FC = () => {
     { name: 'Facturation', path: '/edition-facture', icon: '💰' },
     { name: 'Liste des Factures', path: '/factures-list', icon: '📄' },
     { name: 'Paramètres', path: '/settings', icon: '⚙️' },
-
   ];
 
   const doctorLinks = [
@@ -32,12 +31,14 @@ const SideNav: React.FC = () => {
     { name: 'Consultations', path: '/consultation', icon: '🩺' },
     { name: 'Rendez-vous', path: '/rdv', icon: '📅' },
     { name: 'Ordonnances', path: '/prescriptions', icon: '📝' },
+    { name: 'Paramètres', path: '/settings', icon: '⚙️' },
   ];
 
   const patientLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Mes Consultations', path: '/historique-consultations', icon: '🩺' },
     { name: 'Facturation', path: '/factures-list', icon: '💰' },
+    { name: 'Paramètres', path: '/settings', icon: '⚙️' },
   ];
 
   const getLinks = () => {
@@ -64,18 +65,17 @@ const SideNav: React.FC = () => {
       <div className="p-4">
         <h1 className="text-white text-xl font-bold">MedFlow</h1>
       </div>
-      
+
       <nav className="mt-8">
         <div className="px-4 space-y-2">
           {getLinks().map((link) => (
             <button
               key={link.path}
               onClick={() => navigate(link.path)}
-              className={`w-full text-left flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors ${
-                isActive(link.path)
+              className={`w-full text-left flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors ${isActive(link.path)
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}
+                }`}
             >
               <span className="mr-3 text-base">{link.icon}</span>
               {link.name}
